@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <!-- =====================================================
+         BASIC SETUP
+    ====================================================== -->
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Item Details - CampusMarket</title>
+
+
+    <!-- =====================================================
+         BOOTSTRAP
+    ====================================================== -->
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+
+    <!-- =====================================================
+         BOOTSTRAP ICONS
+    ====================================================== -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+
+    <!-- =====================================================
+         FONT
+    ====================================================== -->
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+
+<body class="bg-white">
+
+
+    <!-- =====================================================
+         MAIN MARKETPLACE CONTAINER
+    ====================================================== -->
+
+    <div
+        class="container-fluid border border-dark rounded-5 min-vh-100 my-3"
+        style="width: calc(100% - 48px);"
+    >
+
+
+        <!-- =================================================
+             NAVIGATION
+        ================================================== -->
+
+        <nav
+            class="navbar navbar-expand-lg px-4 px-md-5 py-4"
+        >
+
+            <div class="container-fluid px-0">
+
+
+                <!-- =========================================
+                     LOGO
+                ========================================== -->
+
+                <a
+                    href="index.html"
+                    class="navbar-brand d-flex align-items-center gap-2 fw-bold"
+                    style="
+                        font-family: 'Space Grotesk', sans-serif;
+                        font-size: 26px;
+                    "
+                >
+
+                    <span
+                        class="d-flex align-items-center justify-content-center rounded-3 text-white"
+                        style="
+                            width: 42px;
+                            height: 42px;
+                            background-color: #635bff;
+                        "
+                    >
+
+                        <i class="bi bi-mortarboard-fill"></i>
+
+                    </span>
+
+
+                    <span>
+                        CampusMarket
+                    </span>
+
+                </a>
+
+
+                <!-- =========================================
+                     MOBILE NAVIGATION
+                ========================================== -->
+
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainNavigation"
+                    aria-controls="mainNavigation"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                >
+
+                    <span class="navbar-toggler-icon"></span>
+
+                </button>
+
+
+                <!-- =========================================
+                     RIGHT NAVIGATION
+                ========================================== -->
+
+                <div
+                    class="collapse navbar-collapse justify-content-end"
+                    id="mainNavigation"
+                >
+
+                    <div
+                        class="d-flex align-items-center gap-2 mt-3 mt-lg-0"
+                    >
+
+
+                        <!-- Logged out -->
+
+                        <div
+                            id="loggedOutNav"
+                            class="d-flex align-items-center gap-2"
+                        >
+
+                            <button
+                                type="button"
+                                class="btn btn-link text-dark text-decoration-none fs-5 px-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#loginModal"
+                            >
+                                Login
+                            </button>
+
+
+                            <span class="text-secondary fs-5">
+                                |
+                            </span>
+
+
+                            <button
+                                type="button"
+                                class="btn btn-link text-dark text-decoration-none fs-5 px-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#signupModal"
+                            >
+                                Signup
+                            </button>
+
+                        </div>
+
+
+                        <!-- Logged in -->
+
+                        <div
+                            id="loggedInNav"
+                            class="d-none align-items-center gap-2"
+                        >
+
+                            <a
+                                href="sell.html"
+                                class="btn btn-link text-decoration-none fs-5 px-1"
+                                style="color: #635bff;"
+                            >
+                                Sell Items
+                            </a>
+
+
+                            <span class="text-secondary fs-5">
+                                |
+                            </span>
+
+
+                            <button
+                                id="logoutButton"
+                                type="button"
+                                class="btn btn-link text-dark text-decoration-none fs-5 px-1"
+                            >
+                                Logout
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+        <!-- =================================================
+             BACK TO SEARCH
+        ================================================== -->
+
+        <div class="container-fluid px-4 px-md-5 pt-3">
+
+            <a
+                href="index.html"
+                class="text-decoration-none text-secondary"
+            >
+
+                <i class="bi bi-arrow-left me-2"></i>
+
+                Back to marketplace
+
+            </a>
+
+        </div>
+
+
+        <!-- =================================================
+             ITEM DETAIL
+        ================================================== -->
+
+        <main
+            class="container-fluid px-4 px-md-5 py-4 py-md-5"
+        >
+
+            <!-- Loading -->
+
+            <div
+                id="loadingState"
+                class="text-center py-5"
+            >
+
+                <div
+                    class="spinner-border"
+                    style="color: #635bff;"
+                    role="status"
+                >
+
+                    <span class="visually-hidden">
+                        Loading...
+                    </span>
+
+                </div>
+
+
+                <p class="text-secondary mt-3 mb-0">
+
+                    Loading item...
+
+                </p>
+
+            </div>
+
+
+            <!-- Error -->
+
+            <div
+                id="errorState"
+                class="alert alert-danger d-none"
+                role="alert"
+            >
+
+                <h5 class="alert-heading">
+                    Item unavailable
+                </h5>
+
+                <p
+                    id="errorMessage"
+                    class="mb-0"
+                >
+                    We couldn't find this item.
+                </p>
+
+            </div>
+
+
+            <!-- =================================================
+                 ACTUAL ITEM CONTENT
+            ================================================== -->
+
+            <div
+                id="itemContent"
+                class="d-none"
+            >
+
+                <div class="row g-4 g-lg-5">
+
+
+                    <!-- =========================================
+                         LEFT SIDE
+                         
+                         IMAGE GALLERY
+                    ========================================== -->
+
+                    <div class="col-lg-6">
+
+                        <div
+                            class="row g-3"
+                        >
+
+
+                            <!-- =================================
+                                 THUMBNAILS
+                            ================================== -->
+
+                            <div class="col-3 col-md-2">
+
+                                <div
+                                    id="thumbnailContainer"
+                                    class="d-flex flex-column gap-3"
+                                >
+
+                                    <!--
+                                        Firebase images will
+                                        be inserted here.
+                                    -->
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 MAIN IMAGE
+                            ================================== -->
+
+                            <div class="col-9 col-md-10">
+
+                                <div
+                                    class="border border-dark rounded-4 overflow-hidden bg-light"
+                                    style="height: 550px;"
+                                >
+
+                                    <img
+                                        id="mainItemImage"
+                                        src=""
+                                        alt="Item image"
+                                        class="w-100 h-100"
+                                        style="
+                                            object-fit: contain;
+                                        "
+                                    >
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================================
+                         RIGHT SIDE
+                         
+                         ITEM INFORMATION
+                    ========================================== -->
+
+                    <div class="col-lg-6">
+
+                        <div
+                            class="h-100 border border-dark rounded-4 p-4 p-md-5"
+                        >
+
+
+                            <!-- Category -->
+
+                            <div
+                                id="itemCategory"
+                                class="text-uppercase small fw-semibold mb-3"
+                                style="color: #635bff;"
+                            >
+                            </div>
+
+
+                            <!-- Item Name -->
+
+                            <h1
+                                id="itemName"
+                                class="fw-bold display-6 mb-3"
+                                style="
+                                    font-family: 'Space Grotesk', sans-serif;
+                                "
+                            >
+                            </h1>
+
+
+                            <!-- Price -->
+
+                            <div
+                                id="itemPrice"
+                                class="display-6 fw-bold mb-4"
+                            >
+                            </div>
+
+
+                            <!-- Condition -->
+
+                            <div
+                                class="mb-4"
+                            >
+
+                                <span
+                                    class="badge rounded-pill bg-light text-dark border px-3 py-2"
+                                    id="itemCondition"
+                                >
+                                </span>
+
+                            </div>
+
+
+                            <hr>
+
+
+                            <!-- Description -->
+
+                            <div class="py-3">
+
+                                <h5
+                                    class="fw-bold"
+                                    style="
+                                        font-family: 'Space Grotesk', sans-serif;
+                                    "
+                                >
+                                    Description
+                                </h5>
+
+
+                                <p
+                                    id="itemDescription"
+                                    class="text-secondary mb-0"
+                                    style="
+                                        line-height: 1.7;
+                                    "
+                                >
+                                </p>
+
+                            </div>
+
+
+                            <hr>
+
+
+                            <!-- Location -->
+
+                            <div class="py-3">
+
+                                <h5
+                                    class="fw-bold"
+                                    style="
+                                        font-family: 'Space Grotesk', sans-serif;
+                                    "
+                                >
+                                    Location
+                                </h5>
+
+
+                                <div
+                                    class="d-flex align-items-start gap-2 text-secondary"
+                                >
+
+                                    <i
+                                        class="bi bi-geo-alt-fill mt-1"
+                                        style="color: #635bff;"
+                                    ></i>
+
+
+                                    <div>
+
+                                        <div
+                                            id="itemLocation"
+                                            class="text-dark"
+                                        >
+                                        </div>
+
+
+                                        <div
+                                            id="itemSchool"
+                                            class="small"
+                                        >
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <hr>
+
+
+                            <!-- Seller -->
+
+                            <div class="py-3">
+
+                                <h5
+                                    class="fw-bold"
+                                    style="
+                                        font-family: 'Space Grotesk', sans-serif;
+                                    "
+                                >
+                                    Seller
+                                </h5>
+
+
+                                <div
+                                    class="d-flex align-items-center gap-3"
+                                >
+
+                                    <div
+                                        class="rounded-circle d-flex align-items-center justify-content-center text-white"
+                                        style="
+                                            width: 48px;
+                                            height: 48px;
+                                            background-color: #635bff;
+                                        "
+                                    >
+
+                                        <i class="bi bi-person-fill"></i>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <div
+                                            id="sellerName"
+                                            class="fw-semibold"
+                                        >
+                                        </div>
+
+
+                                        <div
+                                            id="sellerSchool"
+                                            class="small text-secondary"
+                                        >
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 MESSAGE SELLER
+                            ================================== -->
+
+                            <div class="mt-4">
+
+                                <button
+                                    id="messageSellerButton"
+                                    type="button"
+                                    class="btn btn-lg w-100 text-white rounded-3 py-3"
+                                    style="
+                                        background-color: #635bff;
+                                        border-color: #635bff;
+                                    "
+                                >
+
+                                    <i
+                                        class="bi bi-chat-dots-fill me-2"
+                                    ></i>
+
+                                    Message Seller
+
+                                </button>
+
+                            </div>
+
+
+                            <!-- Safety note -->
+
+                            <div
+                                class="text-center text-secondary small mt-3"
+                            >
+
+                                <i class="bi bi-shield-check me-1"></i>
+
+                                Communicate safely through CampusMarket.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+
+        <!-- =================================================
+             COMMUNICATION AREA
+        ================================================== -->
+
+        <section
+            class="container-fluid px-4 px-md-5 pb-5"
+        >
+
+            <div
+                class="border-top pt-4"
+            >
+
+                <h5
+                    class="fw-bold"
+                    style="
+                        font-family: 'Space Grotesk', sans-serif;
+                    "
+                >
+                    Communication
+                </h5>
+
+                <p class="text-secondary mb-0">
+
+                    Questions about this item?
+                    Message the seller to discuss availability,
+                    condition, pickup location, and price.
+
+                </p>
+
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- =====================================================
+         LOGIN MODAL
+    ====================================================== -->
+
+    <div
+        class="modal fade"
+        id="loginModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div
+                class="modal-content border-0 rounded-4 shadow"
+            >
+
+                <div class="modal-header border-0 px-4 pt-4">
+
+                    <div>
+
+                        <h5 class="modal-title fw-bold">
+                            Welcome back
+                        </h5>
+
+                        <p class="text-secondary small mb-0">
+                            Login to your CampusMarket account.
+                        </p>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body px-4 pb-4">
+
+                    <form id="loginForm">
+
+                        <div class="mb-3">
+
+                            <label
+                                for="loginEmail"
+                                class="form-label fw-semibold"
+                            >
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="loginEmail"
+                                class="form-control form-control-lg rounded-3"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label
+                                for="loginPassword"
+                                class="form-label fw-semibold"
+                            >
+                                Password
+                            </label>
+
+                            <input
+                                type="password"
+                                id="loginPassword"
+                                class="form-control form-control-lg rounded-3"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div
+                            id="loginError"
+                            class="alert alert-danger py-2 small d-none"
+                        ></div>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-lg w-100 text-white rounded-3"
+                            style="
+                                background-color: #635bff;
+                            "
+                        >
+                            Login
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SIGNUP MODAL
+    ====================================================== -->
+
+    <div
+        class="modal fade"
+        id="signupModal"
+        tabindex="-1"
+        aria-hidden="true"
+    >
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div
+                class="modal-content border-0 rounded-4 shadow"
+            >
+
+                <div class="modal-header border-0 px-4 pt-4">
+
+                    <div>
+
+                        <h5 class="modal-title fw-bold">
+                            Create your account
+                        </h5>
+
+                        <p class="text-secondary small mb-0">
+                            Join your school marketplace.
+                        </p>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body px-4 pb-4">
+
+                    <form id="signupForm">
+
+                        <div class="mb-3">
+
+                            <label
+                                for="signupEmail"
+                                class="form-label fw-semibold"
+                            >
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="signupEmail"
+                                class="form-control form-control-lg rounded-3"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="mb-3">
+
+                            <label
+                                for="signupPassword"
+                                class="form-label fw-semibold"
+                            >
+                                Password
+                            </label>
+
+                            <input
+                                type="password"
+                                id="signupPassword"
+                                class="form-control form-control-lg rounded-3"
+                                minlength="6"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div
+                            id="signupError"
+                            class="alert alert-danger py-2 small d-none"
+                        ></div>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-lg w-100 text-white rounded-3"
+                            style="
+                                background-color: #635bff;
+                            "
+                        >
+                            Create Account
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         BOOTSTRAP JAVASCRIPT
+    ====================================================== -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    ></script>
+
+
+    <!-- =====================================================
+         ITEM DETAIL JAVASCRIPT
+    ====================================================== -->
+
+    <script
+        type="module"
+        src="js/item-detail.js"
+    ></script>
+
+</body>
+
+</html>
