@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <!-- =========================================
+         BASIC PAGE SETUP
+    ========================================== -->
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>CampusMarket</title>
+
+
+    <!-- =========================================
+         BOOTSTRAP CSS
+    ========================================== -->
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+
+    <!-- =========================================
+         BOOTSTRAP ICONS
+    ========================================== -->
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    >
+
+
+    <!-- =========================================
+         GOOGLE FONT
+         
+         Optional - Bootstrap is still doing
+         the styling.
+    ========================================== -->
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+
+<body class="bg-white">
+
+
+    <!-- =====================================================
+         OUTER MARKETPLACE CONTAINER
+         
+         This creates the rounded wireframe structure.
+    ====================================================== -->
+
+    <div
+        class="container-fluid border border-dark rounded-5 min-vh-100 my-3"
+        style="width: calc(100% - 48px);"
+    >
+
+
+        <!-- =================================================
+             NAVIGATION
+        ================================================== -->
+
+        <nav
+            class="navbar navbar-expand-lg px-4 px-md-5 py-4"
+        >
+
+            <div class="container-fluid px-0">
+
+
+                <!-- =========================================
+                     LOGO
+                ========================================== -->
+
+                <a
+                    href="index.html"
+                    class="navbar-brand d-flex align-items-center gap-2 fw-bold"
+                    style="
+                        font-family: 'Space Grotesk', sans-serif;
+                        font-size: 26px;
+                    "
+                >
+
+                    <span
+                        class="d-flex align-items-center justify-content-center rounded-3 text-white"
+                        style="
+                            width: 42px;
+                            height: 42px;
+                            background-color: #635bff;
+                        "
+                    >
+
+                        <i class="bi bi-mortarboard-fill"></i>
+
+                    </span>
+
+
+                    <span>
+                        CampusMarket
+                    </span>
+
+                </a>
+
+
+                <!-- =========================================
+                     MOBILE NAVIGATION BUTTON
+                ========================================== -->
+
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainNavigation"
+                    aria-controls="mainNavigation"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                >
+
+                    <span class="navbar-toggler-icon"></span>
+
+                </button>
+
+
+                <!-- =========================================
+                     RIGHT SIDE NAVIGATION
+                ========================================== -->
+
+                <div
+                    class="collapse navbar-collapse justify-content-end"
+                    id="mainNavigation"
+                >
+
+                    <div
+                        class="d-flex align-items-center justify-content-end gap-2 mt-3 mt-lg-0"
+                    >
+
+
+                        <!-- =================================
+                             LOGGED OUT NAVIGATION
+                             
+                             Visible when user is NOT
+                             authenticated.
+                        ================================== -->
+
+                        <div
+                            id="loggedOutNav"
+                            class="d-flex align-items-center gap-2"
+                        >
+
+                            <button
+                                type="button"
+                                class="btn btn-link text-dark text-decoration-none fs-5 px-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#loginModal"
+                            >
+                                Login
+                            </button>
+
+
+                            <span class="text-secondary fs-5">
+                                |
+                            </span>
+
+
+                            <button
+                                type="button"
+                                class="btn btn-link text-dark text-decoration-none fs-5 px-1"
+                                data-bs-toggle="modal"
+                                data-bs-target="#signupModal"
+                            >
+                                Signup
+                            </button>
+
+                        </div>
+
+
+                        <!-- =================================
+                             LOGGED IN NAVIGATION
+                             
+                             Hidden until Firebase says
+                             the user is authenticated.
+                        ================================== -->
+
+                        <div
+                            id="loggedInNav"
+                            class="d-none align-items-center gap-2"
+                        >
+
+                            <a
+                                href="sell.html"
+                                class="btn btn-link text-decoration-none fs-5 px-1"
+                                style="color: #635bff;"
+                            >
+                                Sell Items
+                            </a>
+
+
+                            <span class="text-secondary fs-5">
+                                |
+                            </span>
+
+
+                            <button
+                                id="logoutButton"
+                                type="button"
+                                class="btn btn-link text-dark text-decoration-none fs-5 px-1"
+                            >
+                                Logout
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </nav>
+
+
+        <!-- =================================================
+             SEARCH BAR
+        ================================================== -->
+
+        <section
+            class="d-flex justify-content-center px-3 px-md-5 py-4 pb-5"
+        >
+
+            <div
+                class="input-group"
+                style="max-width: 810px;"
+            >
+
+
+                <!-- Search icon -->
+
+                <span
+                    class="input-group-text bg-light border border-dark border-end-0 rounded-start-4 px-3"
+                >
+
+                    <i class="bi bi-search fs-5 text-secondary"></i>
+
+                </span>
+
+
+                <!-- Search input -->
+
+                <input
+                    type="text"
+                    id="locationSearch"
+                    class="form-control bg-light border border-dark border-start-0 border-end-0 py-3 fs-4 shadow-none"
+                    placeholder="Search Region/School"
+                    autocomplete="off"
+                >
+
+
+                <!-- Clear button -->
+
+                <button
+                    id="clearSearch"
+                    type="button"
+                    class="btn bg-light border border-dark border-start-0 rounded-end-4 d-none"
+                >
+
+                    <i class="bi bi-x-lg"></i>
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             MARKETPLACE LISTING AREA
+             
+             IMPORTANT:
+             This is intentionally EMPTY.
+             
+             Later Firebase/Firestore will insert the
+             actual products here.
+        ================================================== -->
+
+        <main
+            class="container-fluid px-3 px-md-5 pb-5"
+        >
+
+            <div
+                id="listingGrid"
+                class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4"
+            >
+
+                <!--
+                    =========================================
+                    FIRESTORE LISTINGS WILL GO HERE
+                    =========================================
+
+                    We are NOT putting fake products here.
+
+                    Later JavaScript can generate:
+
+                    <div class="col">
+                        <div class="card">
+                            ...
+                        </div>
+                    </div>
+
+                -->
+
+            </div>
+
+
+            <!-- =================================================
+                 EMPTY MARKETPLACE MESSAGE
+                 
+                 This can be removed later when Firestore
+                 always has listings.
+            ================================================== -->
+
+            <div
+                id="emptyMarketplace"
+                class="d-flex flex-column align-items-center justify-content-center text-center py-5"
+                style="min-height: 300px;"
+            >
+
+                <div
+                    class="d-flex align-items-center justify-content-center rounded-4 mb-3"
+                    style="
+                        width: 70px;
+                        height: 70px;
+                        background-color: #f0efff;
+                        color: #635bff;
+                    "
+                >
+
+                    <i class="bi bi-shop fs-2"></i>
+
+                </div>
+
+
+                <h3
+                    class="fw-bold"
+                    style="
+                        font-family: 'Space Grotesk', sans-serif;
+                    "
+                >
+                    Marketplace
+                </h3>
+
+
+                <p class="text-secondary mb-0">
+
+                    Items from your school community
+                    will appear here.
+
+                </p>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- =====================================================
+         LOGIN MODAL
+    ====================================================== -->
+
+    <div
+        class="modal fade"
+        id="loginModal"
+        tabindex="-1"
+        aria-labelledby="loginModalLabel"
+        aria-hidden="true"
+    >
+
+        <div
+            class="modal-dialog modal-dialog-centered"
+        >
+
+            <div
+                class="modal-content border-0 rounded-4 shadow"
+            >
+
+
+                <!-- Modal Header -->
+
+                <div class="modal-header border-0 px-4 pt-4">
+
+                    <div>
+
+                        <h5
+                            id="loginModalLabel"
+                            class="modal-title fw-bold"
+                            style="
+                                font-family: 'Space Grotesk', sans-serif;
+                            "
+                        >
+                            Welcome back
+                        </h5>
+
+
+                        <p class="text-secondary small mb-0 mt-1">
+
+                            Login to your CampusMarket account.
+
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+
+                </div>
+
+
+                <!-- Modal Body -->
+
+                <div class="modal-body px-4 pb-4">
+
+                    <form id="loginForm">
+
+
+                        <!-- Email -->
+
+                        <div class="mb-3">
+
+                            <label
+                                for="loginEmail"
+                                class="form-label fw-semibold"
+                            >
+                                Email
+                            </label>
+
+
+                            <input
+                                type="email"
+                                id="loginEmail"
+                                class="form-control form-control-lg rounded-3"
+                                placeholder="you@example.com"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Password -->
+
+                        <div class="mb-3">
+
+                            <label
+                                for="loginPassword"
+                                class="form-label fw-semibold"
+                            >
+                                Password
+                            </label>
+
+
+                            <input
+                                type="password"
+                                id="loginPassword"
+                                class="form-control form-control-lg rounded-3"
+                                placeholder="Password"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Error -->
+
+                        <div
+                            id="loginError"
+                            class="alert alert-danger py-2 small d-none"
+                            role="alert"
+                        ></div>
+
+
+                        <!-- Login Button -->
+
+                        <button
+                            type="submit"
+                            class="btn btn-lg w-100 text-white rounded-3"
+                            style="
+                                background-color: #635bff;
+                                border-color: #635bff;
+                            "
+                        >
+
+                            Login
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         SIGNUP MODAL
+    ====================================================== -->
+
+    <div
+        class="modal fade"
+        id="signupModal"
+        tabindex="-1"
+        aria-labelledby="signupModalLabel"
+        aria-hidden="true"
+    >
+
+        <div
+            class="modal-dialog modal-dialog-centered"
+        >
+
+            <div
+                class="modal-content border-0 rounded-4 shadow"
+            >
+
+
+                <!-- Modal Header -->
+
+                <div class="modal-header border-0 px-4 pt-4">
+
+                    <div>
+
+                        <h5
+                            id="signupModalLabel"
+                            class="modal-title fw-bold"
+                            style="
+                                font-family: 'Space Grotesk', sans-serif;
+                            "
+                        >
+                            Create your account
+                        </h5>
+
+
+                        <p class="text-secondary small mb-0 mt-1">
+
+                            Join your school marketplace.
+
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                    ></button>
+
+                </div>
+
+
+                <!-- Modal Body -->
+
+                <div class="modal-body px-4 pb-4">
+
+                    <form id="signupForm">
+
+
+                        <!-- Email -->
+
+                        <div class="mb-3">
+
+                            <label
+                                for="signupEmail"
+                                class="form-label fw-semibold"
+                            >
+                                Email
+                            </label>
+
+
+                            <input
+                                type="email"
+                                id="signupEmail"
+                                class="form-control form-control-lg rounded-3"
+                                placeholder="you@example.com"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Password -->
+
+                        <div class="mb-3">
+
+                            <label
+                                for="signupPassword"
+                                class="form-label fw-semibold"
+                            >
+                                Password
+                            </label>
+
+
+                            <input
+                                type="password"
+                                id="signupPassword"
+                                class="form-control form-control-lg rounded-3"
+                                placeholder="At least 6 characters"
+                                minlength="6"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- Error -->
+
+                        <div
+                            id="signupError"
+                            class="alert alert-danger py-2 small d-none"
+                            role="alert"
+                        ></div>
+
+
+                        <!-- Signup Button -->
+
+                        <button
+                            type="submit"
+                            class="btn btn-lg w-100 text-white rounded-3"
+                            style="
+                                background-color: #635bff;
+                                border-color: #635bff;
+                            "
+                        >
+
+                            Create Account
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         BOOTSTRAP JAVASCRIPT
+    ====================================================== -->
+
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    ></script>
+
+
+    <!-- =====================================================
+         FIREBASE + YOUR JAVASCRIPT
+         
+         These are separate from Bootstrap.
+    ====================================================== -->
+
+    <script
+        type="module"
+        src="js/app.js"
+    ></script>
+
+
+</body>
+
+</html>
