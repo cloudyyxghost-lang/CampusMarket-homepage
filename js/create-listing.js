@@ -1,6 +1,8 @@
 // =====================================================
-// IMPORT FIREBASE
+// CAMPUSMARKET
+// CREATE LISTING
 // =====================================================
+
 
 import {
     auth,
@@ -16,59 +18,67 @@ import {
 import {
     collection,
     addDoc,
+    doc,
+    getDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
 // =====================================================
-// ELEMENTS
+// HTML ELEMENTS
 // =====================================================
 
-const form =
+const listingForm =
     document.getElementById(
-        "createListingForm"
+        "listingForm"
     );
 
 
-const imageUrlInput =
+const itemImageURL =
     document.getElementById(
-        "imageUrlInput"
+        "itemImageURL"
     );
 
 
-const addImageButton =
+const imagePreview =
     document.getElementById(
-        "addImageButton"
+        "imagePreview"
     );
 
 
-const imagePreviewContainer =
+const imagePlaceholder =
     document.getElementById(
-        "imagePreviewContainer"
+        "imagePlaceholder"
     );
 
 
-const imageCount =
+const sellerNameDisplay =
     document.getElementById(
-        "imageCount"
+        "sellerNameDisplay"
     );
 
 
-const createError =
+const sellerSchoolDisplay =
     document.getElementById(
-        "createError"
+        "sellerSchoolDisplay"
     );
 
 
-const createSuccess =
+const listingError =
     document.getElementById(
-        "createSuccess"
+        "listingError"
     );
 
 
-const publishButton =
+const listingSuccess =
     document.getElementById(
-        "publishButton"
+        "listingSuccess"
+    );
+
+
+const createListingButton =
+    document.getElementById(
+        "createListingButton"
     );
 
 
@@ -78,19 +88,7 @@ const publishButton =
 
 let currentUser = null;
 
-
-// =====================================================
-// IMAGE URL ARRAY
-// =====================================================
-
-let imageURLs = [];
-
-
-// =====================================================
-// MAXIMUM NUMBER OF IMAGES
-// =====================================================
-
-const MAX_IMAGES = 8;
+let currentUserProfile = null;
 
 
 // =====================================================
@@ -99,416 +97,299 @@ const MAX_IMAGES = 8;
 
 onAuthStateChanged(
     auth,
-    (user) => {
+    async (user) => {
+
+        console.log(
+            "Authentication state:",
+            user
+        );
+
+
+        // =============================================
+        // NOT LOGGED IN
+        // =============================================
 
         if (!user) {
 
+            console.log(
+                "No user logged in."
+            );
+
+
             window.location.href =
                 "index.html";
+
 
             return;
 
         }
 
 
-        currentUser = user;
+        // =============================================
+        // SAVE CURRENT USER
+        // =============================================
+
+        currentUser =
+            user;
+
+
+        console.log(
+            "Current user:",
+            currentUser.uid
+        );
+
+
+        // =============================================
+        // LOAD USER PROFILE
+        // =============================================
+
+        await loadUserProfile();
 
     }
 );
 
 
 // =====================================================
-// ADD IMAGE BUTTON
+// LOAD USER PROFILE
 // =====================================================
 
-addImageButton.addEventListener(
-    "click",
-    () => {
-
-        addImage();
-
-    }
-);
-
-
-// =====================================================
-// PRESS ENTER TO ADD IMAGE
-// =====================================================
-
-imageUrlInput.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (
-            event.key === "Enter"
-        ) {
-
-            event.preventDefault();
-
-            addImage();
-
-        }
-
-    }
-);
-
-
-// =====================================================
-// ADD IMAGE
-// =====================================================
-
-function addImage() {
-
-    clearMessages();
-
-
-    // ---------------------------------------------
-    // GET URL
-    // ---------------------------------------------
-
-    const url =
-        imageUrlInput.value.trim();
-
-
-    // ---------------------------------------------
-    // CHECK EMPTY
-    // ---------------------------------------------
-
-    if (!url) {
-
-        showError(
-            "Please enter an image URL."
-        );
-
-        return;
-
-    }
-
-
-    // ---------------------------------------------
-    // CHECK MAXIMUM
-    // ---------------------------------------------
-
-    if (
-        imageURLs.length >= MAX_IMAGES
-    ) {
-
-        showError(
-            "You can add a maximum of 8 images."
-        );
-
-        return;
-
-    }
-
-
-    // ---------------------------------------------
-    // CHECK DUPLICATE
-    // ---------------------------------------------
-
-    if (
-        imageURLs.includes(url)
-    ) {
-
-        showError(
-            "You already added this image."
-        );
-
-        return;
-
-    }
-
-
-    // ---------------------------------------------
-    // BASIC URL VALIDATION
-    // ---------------------------------------------
-
-    let parsedURL;
-
+async function loadUserProfile() {
 
     try {
 
-        parsedURL =
-            new URL(url);
+        const userReference =
+            doc(
+                db,
+                "users",
+                currentUser.uid
+            );
+
+
+        const userSnapshot =
+            await getDoc(
+                userReference
+            );
+
+
+        if (
+            !userSnapshot.exists()
+        ) {
+
+            showError(
+                "Your user profile could not be found."
+            );
+
+
+            return;
+
+        }
+
+
+        currentUserProfile =
+            userSnapshot.data();
+
+
+        console.log(
+            "User profile:",
+            currentUserProfile
+        );
+
+
+        // =============================================
+        // DISPLAY SELLER INFORMATION
+        // =============================================
+
+        const sellerName =
+            currentUserProfile.sellerName ||
+            "Seller";
+
+
+        const school =
+            currentUserProfile.school ||
+            "School not specified";
+
+
+        sellerNameDisplay.textContent =
+            sellerName;
+
+
+        sellerSchoolDisplay.textContent =
+            school;
 
     }
 
     catch (error) {
 
-        showError(
-            "Please enter a valid image URL."
+        console.error(
+            "USER PROFILE ERROR:",
+            error
         );
 
-        return;
+
+        showError(
+            "Unable to load your seller profile."
+        );
 
     }
 
-
-    // ---------------------------------------------
-    // ONLY HTTP / HTTPS
-    // ---------------------------------------------
-
-    if (
-        parsedURL.protocol !== "http:" &&
-        parsedURL.protocol !== "https:"
-    ) {
-
-        showError(
-            "Image URL must start with http:// or https://."
-        );
-
-        return;
-
-    }
+}
 
 
-    // ---------------------------------------------
-    // TEST THE IMAGE
-    // ---------------------------------------------
+// =====================================================
+// IMAGE PREVIEW
+// =====================================================
 
-    const testImage =
-        new Image();
+itemImageURL.addEventListener(
+    "input",
+    () => {
 
-
-    testImage.onload =
-        () => {
-
-            // -----------------------------------------
-            // IMAGE IS VALID
-            // -----------------------------------------
-
-            imageURLs.push(
-                url
-            );
+        const url =
+            itemImageURL.value.trim();
 
 
-            imageUrlInput.value =
+        // =============================================
+        // NO URL
+        // =============================================
+
+        if (!url) {
+
+            imagePreview.src =
                 "";
 
 
-            renderImages();
-
-
-            updateImageCount();
-
-
-            clearMessages();
-
-        };
-
-
-    testImage.onerror =
-        () => {
-
-            showError(
-                "We could not load that image. Please check the URL and make sure it points directly to an image."
+            imagePreview.classList.add(
+                "d-none"
             );
 
-        };
 
-
-    // ---------------------------------------------
-    // START LOADING IMAGE
-    // ---------------------------------------------
-
-    testImage.src =
-        url;
-
-}
-
-
-// =====================================================
-// DISPLAY IMAGES
-// =====================================================
-
-function renderImages() {
-
-    imagePreviewContainer.innerHTML =
-        "";
-
-
-    imageURLs.forEach(
-        (url, index) => {
-
-            const column =
-                document.createElement(
-                    "div"
-                );
-
-
-            column.className =
-                "col-6 col-md-4";
-
-
-            column.innerHTML = `
-
-                <div
-                    class="card border shadow-sm h-100 overflow-hidden"
-                >
-
-                    <div
-                        class="position-relative"
-                    >
-
-                        <img
-                            src="${escapeHTML(url)}"
-                            alt="Product image ${index + 1}"
-                            class="card-img-top"
-                            style="
-                                height: 150px;
-                                object-fit: cover;
-                            "
-                        >
-
-
-                        <span
-                            class="position-absolute top-0 start-0 m-2 badge bg-dark"
-                        >
-
-                            ${index + 1}
-
-                        </span>
-
-                    </div>
-
-
-                    <div
-                        class="card-body p-2"
-                    >
-
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-danger w-100 remove-image-button"
-                            data-index="${index}"
-                        >
-
-                            <i
-                                class="bi bi-trash me-1"
-                            ></i>
-
-                            Remove
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            `;
-
-
-            imagePreviewContainer.appendChild(
-                column
+            imagePlaceholder.classList.remove(
+                "d-none"
             );
+
+
+            return;
 
         }
-    );
 
 
-    // =================================================
-    // REMOVE BUTTONS
-    // =================================================
+        // =============================================
+        // SHOW IMAGE
+        // =============================================
 
-    const removeButtons =
-        document.querySelectorAll(
-            ".remove-image-button"
+        imagePreview.src =
+            url;
+
+
+        imagePreview.classList.remove(
+            "d-none"
         );
 
 
-    removeButtons.forEach(
-        (button) => {
+        imagePlaceholder.classList.add(
+            "d-none"
+        );
 
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const index =
-                        Number(
-                            button.dataset.index
-                        );
-
-
-                    imageURLs.splice(
-                        index,
-                        1
-                    );
-
-
-                    renderImages();
-
-
-                    updateImageCount();
-
-                }
-            );
-
-        }
-    );
-
-}
+    }
+);
 
 
 // =====================================================
-// UPDATE IMAGE COUNT
+// IMAGE ERROR
 // =====================================================
 
-function updateImageCount() {
+imagePreview.addEventListener(
+    "error",
+    () => {
 
-    imageCount.textContent =
-        `${imageURLs.length} / ${MAX_IMAGES} images`;
+        console.error(
+            "Image could not be loaded:",
+            itemImageURL.value
+        );
 
-}
+
+        imagePreview.classList.add(
+            "d-none"
+        );
+
+
+        imagePlaceholder.classList.remove(
+            "d-none"
+        );
+
+
+        showError(
+            "The image URL could not be loaded. Make sure you pasted a direct image URL."
+        );
+
+    }
+);
 
 
 // =====================================================
-// FORM SUBMISSION
+// IMAGE LOADED
 // =====================================================
 
-form.addEventListener(
+imagePreview.addEventListener(
+    "load",
+    () => {
+
+        hideError();
+
+    }
+);
+
+
+// =====================================================
+// CREATE LISTING
+// =====================================================
+
+listingForm.addEventListener(
     "submit",
     async (event) => {
 
         event.preventDefault();
 
 
-        clearMessages();
+        hideError();
+
+        hideSuccess();
 
 
-        // ---------------------------------------------
+        // =============================================
         // CHECK AUTHENTICATION
-        // ---------------------------------------------
+        // =============================================
 
         if (!currentUser) {
 
             showError(
-                "You must be logged in to create a listing."
+                "Please log in before creating a listing."
             );
+
 
             return;
 
         }
 
 
-        // ---------------------------------------------
-        // CHECK IMAGES
-        // ---------------------------------------------
+        // =============================================
+        // CHECK USER PROFILE
+        // =============================================
 
-        if (
-            imageURLs.length === 0
-        ) {
+        if (!currentUserProfile) {
 
             showError(
-                "Please add at least one image."
+                "Your seller profile is still loading. Please try again."
             );
+
 
             return;
 
         }
 
 
-        // ---------------------------------------------
+        // =============================================
         // GET FORM VALUES
-        // ---------------------------------------------
+        // =============================================
 
         const name =
             document
@@ -522,38 +403,7 @@ form.addEventListener(
         const description =
             document
                 .getElementById(
-                    "description"
-                )
-                .value
-                .trim();
-
-
-        const priceValue =
-            document
-                .getElementById(
-                    "price"
-                )
-                .value;
-
-
-        const price =
-            Number(
-                priceValue
-            );
-
-
-        const status =
-            document
-                .getElementById(
-                    "status"
-                )
-                .value;
-
-
-        const school =
-            document
-                .getElementById(
-                    "school"
+                    "itemDescription"
                 )
                 .value
                 .trim();
@@ -562,7 +412,7 @@ form.addEventListener(
         const category =
             document
                 .getElementById(
-                    "category"
+                    "itemCategory"
                 )
                 .value;
 
@@ -570,38 +420,53 @@ form.addEventListener(
         const condition =
             document
                 .getElementById(
-                    "condition"
+                    "itemCondition"
                 )
                 .value;
+
+
+        const price =
+            Number(
+                document
+                    .getElementById(
+                        "itemPrice"
+                    )
+                    .value
+            );
+
+
+        const school =
+            document
+                .getElementById(
+                    "itemSchool"
+                )
+                .value
+                .trim();
 
 
         const location =
             document
                 .getElementById(
-                    "location"
+                    "itemLocation"
                 )
                 .value
                 .trim();
 
 
-        const pickup =
-            document
-                .getElementById(
-                    "pickup"
-                )
-                .value
-                .trim();
+        const imageURL =
+            itemImageURL.value.trim();
 
 
-        // ---------------------------------------------
+        // =============================================
         // VALIDATION
-        // ---------------------------------------------
+        // =============================================
 
         if (!name) {
 
             showError(
                 "Please enter an item name."
             );
+
 
             return;
 
@@ -611,34 +476,9 @@ form.addEventListener(
         if (!description) {
 
             showError(
-                "Please enter item details."
+                "Please enter a description."
             );
 
-            return;
-
-        }
-
-
-        if (
-            priceValue === "" ||
-            isNaN(price) ||
-            price < 0
-        ) {
-
-            showError(
-                "Please enter a valid price."
-            );
-
-            return;
-
-        }
-
-
-        if (!school) {
-
-            showError(
-                "Please enter your school."
-            );
 
             return;
 
@@ -651,6 +491,7 @@ form.addEventListener(
                 "Please select a category."
             );
 
+
             return;
 
         }
@@ -661,6 +502,34 @@ form.addEventListener(
             showError(
                 "Please select the item's condition."
             );
+
+
+            return;
+
+        }
+
+
+        if (
+            Number.isNaN(price) ||
+            price < 0
+        ) {
+
+            showError(
+                "Please enter a valid price."
+            );
+
+
+            return;
+
+        }
+
+
+        if (!school) {
+
+            showError(
+                "Please enter your school."
+            );
+
 
             return;
 
@@ -673,23 +542,79 @@ form.addEventListener(
                 "Please enter a location."
             );
 
+
             return;
 
         }
 
 
-        // ---------------------------------------------
-        // DISABLE BUTTON
-        // ---------------------------------------------
+        // =============================================
+        // IMAGE URL VALIDATION
+        // =============================================
 
-        publishButton.disabled =
+        let images = [];
+
+
+        if (imageURL) {
+
+            try {
+
+                const imageURLObject =
+                    new URL(
+                        imageURL
+                    );
+
+
+                if (
+                    imageURLObject.protocol !==
+                        "http:" &&
+                    imageURLObject.protocol !==
+                        "https:"
+                ) {
+
+                    showError(
+                        "Please enter a valid image URL beginning with http:// or https://."
+                    );
+
+
+                    return;
+
+                }
+
+
+                images = [
+                    imageURL
+                ];
+
+            }
+
+            catch (error) {
+
+                showError(
+                    "Please enter a valid image URL."
+                );
+
+
+                return;
+
+            }
+
+        }
+
+
+        // =============================================
+        // DISABLE BUTTON
+        // =============================================
+
+        createListingButton.disabled =
             true;
 
 
-        publishButton.innerHTML = `
+        createListingButton.innerHTML = `
 
             <span
                 class="spinner-border spinner-border-sm me-2"
+                role="status"
             ></span>
 
             Creating Listing...
@@ -699,29 +624,35 @@ form.addEventListener(
 
         try {
 
-            // =================================================
-            // FIRESTORE LISTING
-            // =================================================
+            // =========================================
+            // SELLER INFORMATION
+            // =========================================
+
+            const sellerName =
+                currentUserProfile.sellerName ||
+                "Seller";
+
+
+            const sellerSchool =
+                currentUserProfile.school ||
+                school;
+
+
+            // =========================================
+            // LISTING OBJECT
+            // =========================================
 
             const listingData = {
 
-                // Seller information
-                sellerId:
-                    currentUser.uid,
+                // -------------------------------------
+                // ITEM
+                // -------------------------------------
 
-                sellerEmail:
-                    currentUser.email || "",
-
-
-                // Item information
                 name:
                     name,
 
                 description:
                     description,
-
-                price:
-                    price,
 
                 category:
                     category,
@@ -729,38 +660,90 @@ form.addEventListener(
                 condition:
                     condition,
 
+                price:
+                    price,
 
-                // Location
+
+                // -------------------------------------
+                // LOCATION
+                // -------------------------------------
+
                 school:
                     school,
 
                 location:
                     location,
 
-                pickup:
-                    pickup,
 
+                // -------------------------------------
+                // IMAGE URL
+                // -------------------------------------
 
-                // Listing status
-                status:
-                    status,
-
-
-                // IMAGE URLS
                 images:
-                    imageURLs,
+                    images,
 
 
-                // Timestamp
+                // -------------------------------------
+                // SELLER
+                // -------------------------------------
+
+                sellerId:
+                    currentUser.uid,
+
+                sellerName:
+                    sellerName,
+
+                sellerSchool:
+                    sellerSchool,
+
+
+                // -------------------------------------
+                // STATUS
+                // -------------------------------------
+
+                status:
+                    "active",
+
+
+                // -------------------------------------
+                // DATE
+                // -------------------------------------
+
                 createdAt:
                     serverTimestamp()
 
             };
 
 
-            // =================================================
-            // ADD TO FIRESTORE
-            // =================================================
+            console.log(
+                "================================="
+            );
+
+
+            console.log(
+                "LISTING DATA"
+            );
+
+
+            console.log(
+                listingData
+            );
+
+
+            console.log(
+                "IMAGE URL:",
+                imageURL
+            );
+
+
+            console.log(
+                "================================="
+            );
+
+
+            // =========================================
+            // SAVE TO FIRESTORE
+            // =========================================
 
             const listingReference =
                 await addDoc(
@@ -773,23 +756,23 @@ form.addEventListener(
 
 
             console.log(
-                "Listing successfully created:",
+                "Listing created:",
                 listingReference.id
             );
 
 
-            // =================================================
+            // =========================================
             // SUCCESS
-            // =================================================
+            // =========================================
 
             showSuccess(
-                "Your listing has been created successfully."
+                "Listing created successfully!"
             );
 
 
-            // =================================================
+            // =========================================
             // REDIRECT
-            // =================================================
+            // =========================================
 
             setTimeout(
                 () => {
@@ -806,17 +789,48 @@ form.addEventListener(
         catch (error) {
 
             console.error(
-                "Error creating listing:",
+                "================================="
+            );
+
+
+            console.error(
+                "CREATE LISTING ERROR"
+            );
+
+
+            console.error(
                 error
             );
 
 
-            showError(
-                "Something went wrong while creating your listing. Please try again."
+            console.error(
+                "================================="
             );
 
 
-            resetButton();
+            showError(
+                "Unable to create listing: " +
+                error.message
+            );
+
+
+            // =========================================
+            // RESTORE BUTTON
+            // =========================================
+
+            createListingButton.disabled =
+                false;
+
+
+            createListingButton.innerHTML = `
+
+                <i
+                    class="bi bi-plus-circle me-2"
+                ></i>
+
+                Create Listing
+
+            `;
 
         }
 
@@ -832,11 +846,28 @@ function showError(
     message
 ) {
 
-    createError.textContent =
+    listingError.textContent =
         message;
 
 
-    createError.classList.remove(
+    listingError.classList.remove(
+        "d-none"
+    );
+
+}
+
+
+// =====================================================
+// HIDE ERROR
+// =====================================================
+
+function hideError() {
+
+    listingError.textContent =
+        "";
+
+
+    listingError.classList.add(
         "d-none"
     );
 
@@ -851,11 +882,11 @@ function showSuccess(
     message
 ) {
 
-    createSuccess.textContent =
+    listingSuccess.textContent =
         message;
 
 
-    createSuccess.classList.remove(
+    listingSuccess.classList.remove(
         "d-none"
     );
 
@@ -863,81 +894,17 @@ function showSuccess(
 
 
 // =====================================================
-// CLEAR MESSAGES
+// HIDE SUCCESS
 // =====================================================
 
-function clearMessages() {
+function hideSuccess() {
 
-    createError.classList.add(
+    listingSuccess.textContent =
+        "";
+
+
+    listingSuccess.classList.add(
         "d-none"
     );
 
-
-    createSuccess.classList.add(
-        "d-none"
-    );
-
 }
-
-
-// =====================================================
-// RESET BUTTON
-// =====================================================
-
-function resetButton() {
-
-    publishButton.disabled =
-        false;
-
-
-    publishButton.innerHTML = `
-
-        Continue
-
-        <i
-            class="bi bi-arrow-right ms-2"
-        ></i>
-
-    `;
-
-}
-
-
-// =====================================================
-// BASIC HTML ESCAPING
-// =====================================================
-
-function escapeHTML(
-    value
-) {
-
-    return value
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-// =====================================================
-// INITIAL IMAGE COUNT
-// =====================================================
-
-updateImageCount();

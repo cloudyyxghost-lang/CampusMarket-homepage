@@ -1,4 +1,9 @@
 // =====================================================
+// CAMPUSMARKET - MAIN APP
+// =====================================================
+
+
+// =====================================================
 // FIREBASE
 // =====================================================
 
@@ -10,6 +15,8 @@ import {
 
 import {
     onAuthStateChanged,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
     signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
@@ -18,47 +25,58 @@ import {
     collection,
     getDocs,
     query,
-    where
+    where,
+    doc,
+    setDoc,
+    getDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
 // =====================================================
-// ELEMENTS
+// HTML ELEMENTS
 // =====================================================
 
-const listingsContainer =
+
+// Marketplace
+
+const listingGrid =
     document.getElementById(
-        "listingsContainer"
+        "listingGrid"
     );
 
 
-const searchInput =
+const emptyMarketplace =
     document.getElementById(
-        "searchInput"
+        "emptyMarketplace"
     );
 
 
-const searchButton =
+// Search
+
+const locationSearch =
     document.getElementById(
-        "searchButton"
+        "locationSearch"
     );
 
 
-const loginButton =
+const clearSearch =
     document.getElementById(
-        "loginButton"
+        "clearSearch"
     );
 
 
-const signupButton =
+// Navigation
+
+const loggedOutNav =
     document.getElementById(
-        "signupButton"
+        "loggedOutNav"
     );
 
 
-const sellButton =
+const loggedInNav =
     document.getElementById(
-        "sellButton"
+        "loggedInNav"
     );
 
 
@@ -68,101 +86,149 @@ const logoutButton =
     );
 
 
+// Login
+
+const loginForm =
+    document.getElementById(
+        "loginForm"
+    );
+
+
+const loginEmail =
+    document.getElementById(
+        "loginEmail"
+    );
+
+
+const loginPassword =
+    document.getElementById(
+        "loginPassword"
+    );
+
+
+const loginError =
+    document.getElementById(
+        "loginError"
+    );
+
+
+// Signup
+
+const signupForm =
+    document.getElementById(
+        "signupForm"
+    );
+
+
+const signupName =
+    document.getElementById(
+        "signupName"
+    );
+
+
+const signupSchool =
+    document.getElementById(
+        "signupSchool"
+    );
+
+
+const signupEmail =
+    document.getElementById(
+        "signupEmail"
+    );
+
+
+const signupPassword =
+    document.getElementById(
+        "signupPassword"
+    );
+
+
+const signupError =
+    document.getElementById(
+        "signupError"
+    );
+
+
 // =====================================================
-// DATA
+// GLOBAL DATA
 // =====================================================
 
 let allListings = [];
 
 
 // =====================================================
-// AUTHENTICATION
+// AUTH STATE
 // =====================================================
 
 onAuthStateChanged(
     auth,
     (user) => {
 
+        console.log(
+            "Auth state:",
+            user
+        );
+
+
         if (user) {
 
             // -----------------------------------------
-            // USER IS LOGGED IN
+            // LOGGED IN
             // -----------------------------------------
 
-            if (loginButton) {
+            if (loggedOutNav) {
 
-                loginButton.classList.add(
+                loggedOutNav.classList.add(
                     "d-none"
                 );
 
             }
 
 
-            if (signupButton) {
+            if (loggedInNav) {
 
-                signupButton.classList.add(
+                loggedInNav.classList.remove(
                     "d-none"
+                );
+
+                loggedInNav.classList.add(
+                    "d-flex"
                 );
 
             }
 
 
-            if (sellButton) {
-
-                sellButton.classList.remove(
-                    "d-none"
-                );
-
-            }
-
-
-            if (logoutButton) {
-
-                logoutButton.classList.remove(
-                    "d-none"
-                );
-
-            }
+            console.log(
+                "Logged in:",
+                user.email
+            );
 
         }
 
         else {
 
             // -----------------------------------------
-            // USER IS LOGGED OUT
+            // LOGGED OUT
             // -----------------------------------------
 
-            if (loginButton) {
+            if (loggedOutNav) {
 
-                loginButton.classList.remove(
+                loggedOutNav.classList.remove(
                     "d-none"
                 );
 
             }
 
 
-            if (signupButton) {
+            if (loggedInNav) {
 
-                signupButton.classList.remove(
+                loggedInNav.classList.add(
                     "d-none"
                 );
 
-            }
-
-
-            if (sellButton) {
-
-                sellButton.classList.add(
-                    "d-none"
-                );
-
-            }
-
-
-            if (logoutButton) {
-
-                logoutButton.classList.add(
-                    "d-none"
+                loggedInNav.classList.remove(
+                    "d-flex"
                 );
 
             }
@@ -174,459 +240,185 @@ onAuthStateChanged(
 
 
 // =====================================================
-// LOAD LISTINGS
+// SIGNUP
 // =====================================================
 
-async function loadListings() {
+if (signupForm) {
 
-    console.log(
-        "Loading marketplace listings..."
-    );
+    signupForm.addEventListener(
+        "submit",
+        async (event) => {
 
+            event.preventDefault();
 
-    try {
 
-        const listingsReference =
-            collection(
-                db,
-                "listings"
-            );
+            hideSignupError();
 
 
-        /*
-         * We only retrieve listings that are active.
-         *
-         * We intentionally do not use orderBy()
-         * so Firestore does not require an index.
-         */
+            const name =
+                signupName.value.trim();
 
-        const listingsQuery =
-            query(
-                listingsReference,
 
-                where(
-                    "status",
-                    "==",
-                    "active"
-                )
-            );
+            const school =
+                signupSchool.value.trim();
 
 
-        const snapshot =
-            await getDocs(
-                listingsQuery
-            );
+            const email =
+                signupEmail.value.trim();
 
 
-        console.log(
-            "Marketplace listings found:",
-            snapshot.size
-        );
-
-
-        allListings = [];
-
-
-        snapshot.forEach(
-            (documentSnapshot) => {
-
-                allListings.push({
-
-                    id:
-                        documentSnapshot.id,
-
-                    ...documentSnapshot.data()
-
-                });
-
-            }
-        );
-
-
-        // ---------------------------------------------
-        // SORT NEWEST FIRST
-        // ---------------------------------------------
-
-        allListings.sort(
-            (a, b) => {
-
-                return (
-                    getTimestampValue(
-                        b.createdAt
-                    )
-                    -
-                    getTimestampValue(
-                        a.createdAt
-                    )
-                );
-
-            }
-        );
-
-
-        displayListings(
-            allListings
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "Error loading marketplace:",
-            error
-        );
-
-
-        listingsContainer.innerHTML = `
-
-            <div
-                class="col-12 text-center py-5"
-            >
-
-                <div
-                    class="alert alert-danger"
-                >
-
-                    <i
-                        class="bi bi-exclamation-triangle me-2"
-                    ></i>
-
-                    Unable to load marketplace listings.
-
-                </div>
-
-            </div>
-
-        `;
-
-    }
-
-}
-
-
-// =====================================================
-// DISPLAY LISTINGS
-// =====================================================
-
-function displayListings(
-    listings
-) {
-
-    listingsContainer.innerHTML =
-        "";
-
-
-    // ---------------------------------------------
-    // NO RESULTS
-    // ---------------------------------------------
-
-    if (
-        listings.length === 0
-    ) {
-
-        listingsContainer.innerHTML = `
-
-            <div
-                class="col-12 text-center py-5"
-            >
-
-                <div
-                    class="d-flex align-items-center justify-content-center rounded-circle mx-auto mb-3"
-                    style="
-                        width: 75px;
-                        height: 75px;
-                        background-color: #f0efff;
-                        color: #635bff;
-                    "
-                >
-
-                    <i
-                        class="bi bi-search fs-2"
-                    ></i>
-
-                </div>
-
-
-                <h5 class="fw-bold">
-
-                    No items found
-
-                </h5>
-
-
-                <p
-                    class="text-secondary"
-                >
-
-                    Try another search.
-
-                </p>
-
-            </div>
-
-        `;
-
-
-        return;
-
-    }
-
-
-    // ---------------------------------------------
-    // CREATE PRODUCT CARDS
-    // ---------------------------------------------
-
-    listings.forEach(
-        (item) => {
-
-            const column =
-                document.createElement(
-                    "div"
-                );
-
-
-            column.className =
-                "col-sm-6 col-lg-4 col-xl-3";
+            const password =
+                signupPassword.value;
 
 
             // -----------------------------------------
-            // IMAGE
+            // VALIDATION
             // -----------------------------------------
 
-            let image =
-                "https://placehold.co/600x450/e9f1fb/172033?text=No+Image";
+            if (!name) {
+
+                showSignupError(
+                    "Please enter a username."
+                );
+
+                return;
+
+            }
+
+
+            if (!school) {
+
+                showSignupError(
+                    "Please enter your school."
+                );
+
+                return;
+
+            }
+
+
+            if (!email) {
+
+                showSignupError(
+                    "Please enter your email."
+                );
+
+                return;
+
+            }
 
 
             if (
-                Array.isArray(
-                    item.images
-                ) &&
-                item.images.length > 0
+                password.length < 6
             ) {
 
-                image =
-                    item.images[0];
+                showSignupError(
+                    "Password must contain at least 6 characters."
+                );
+
+                return;
 
             }
 
 
-            // -----------------------------------------
-            // CARD
-            // -----------------------------------------
+            try {
 
-            column.innerHTML = `
+                console.log(
+                    "Creating Firebase account..."
+                );
 
-                <a
-                    href="item-detail.html?id=${encodeURIComponent(item.id)}"
-                    class="text-decoration-none text-dark"
-                >
 
-                    <div
-                        class="card border-0 shadow-sm rounded-4 overflow-hidden h-100"
-                    >
+                // =====================================
+                // CREATE AUTH ACCOUNT
+                // =====================================
 
-                        <!-- IMAGE -->
+                const credential =
+                    await createUserWithEmailAndPassword(
+                        auth,
+                        email,
+                        password
+                    );
 
-                        <img
-                            src="${escapeHTML(image)}"
-                            alt="${escapeHTML(item.name || "Item")}"
-                            class="card-img-top"
-                            style="
-                                height: 220px;
-                                object-fit: cover;
-                            "
-                            onerror="
-                                this.src='https://placehold.co/600x450/e9f1fb/172033?text=Image+Unavailable'
-                            "
-                        >
 
+                const user =
+                    credential.user;
 
-                        <!-- CARD BODY -->
 
-                        <div
-                            class="card-body p-3"
-                        >
+                console.log(
+                    "Firebase account created:",
+                    user.uid
+                );
 
-                            <!-- CATEGORY -->
 
-                            <div
-                                class="small text-secondary mb-1"
-                            >
+                // =====================================
+                // CREATE USER PROFILE
+                // =====================================
 
-                                ${escapeHTML(
-                                    item.category ||
-                                    ""
-                                )}
+                await setDoc(
+                    doc(
+                        db,
+                        "users",
+                        user.uid
+                    ),
+                    {
 
-                            </div>
+                        sellerName:
+                            name,
 
+                        school:
+                            school,
 
-                            <!-- NAME -->
+                        email:
+                            email,
 
-                            <h5
-                                class="card-title fw-bold mb-2"
-                            >
+                        profileImage:
+                            "",
 
-                                ${escapeHTML(
-                                    item.name ||
-                                    "Untitled"
-                                )}
+                        createdAt:
+                            serverTimestamp()
 
-                            </h5>
+                    }
+                );
 
 
-                            <!-- PRICE -->
+                console.log(
+                    "User profile created."
+                );
 
-                            <div
-                                class="fs-5 fw-bold mb-2"
-                            >
 
-                                ${formatPrice(
-                                    item.price
-                                )}
+                // =====================================
+                // CLOSE MODAL
+                // =====================================
 
-                            </div>
+                closeModal(
+                    "signupModal"
+                );
 
 
-                            <!-- SCHOOL -->
+                signupForm.reset();
 
-                            <div
-                                class="small text-secondary"
-                            >
 
-                                <i
-                                    class="bi bi-mortarboard me-1"
-                                ></i>
-
-                                ${escapeHTML(
-                                    item.school ||
-                                    "School not specified"
-                                )}
-
-                            </div>
-
-
-                            <!-- LOCATION -->
-
-                            <div
-                                class="small text-secondary mt-1"
-                            >
-
-                                <i
-                                    class="bi bi-geo-alt me-1"
-                                ></i>
-
-                                ${escapeHTML(
-                                    item.location ||
-                                    "Location not specified"
-                                )}
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </a>
-
-            `;
-
-
-            listingsContainer.appendChild(
-                column
-            );
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// SEARCH
-// =====================================================
-
-function performSearch() {
-
-    const searchTerm =
-        searchInput.value
-            .trim()
-            .toLowerCase();
-
-
-    // ---------------------------------------------
-    // SHOW EVERYTHING IF EMPTY
-    // ---------------------------------------------
-
-    if (!searchTerm) {
-
-        displayListings(
-            allListings
-        );
-
-        return;
-
-    }
-
-
-    // ---------------------------------------------
-    // SEARCH
-    // ---------------------------------------------
-
-    const results =
-        allListings.filter(
-            (item) => {
-
-                const searchableText = `
-
-                    ${item.name || ""}
-
-                    ${item.category || ""}
-
-                    ${item.school || ""}
-
-                    ${item.location || ""}
-
-                    ${item.description || ""}
-
-                    ${item.condition || ""}
-
-                `.toLowerCase();
-
-
-                return searchableText.includes(
-                    searchTerm
+                console.log(
+                    "Signup complete."
                 );
 
             }
-        );
+
+            catch (error) {
+
+                console.error(
+                    "SIGNUP ERROR:",
+                    error
+                );
 
 
-    console.log(
-        "Search results:",
-        results.length
-    );
+                showSignupError(
+                    firebaseErrorMessage(
+                        error
+                    )
+                );
 
-
-    displayListings(
-        results
-    );
-
-}
-
-
-// =====================================================
-// SEARCH BUTTON
-// =====================================================
-
-if (searchButton) {
-
-    searchButton.addEventListener(
-        "click",
-        () => {
-
-            performSearch();
+            }
 
         }
     );
@@ -635,36 +427,87 @@ if (searchButton) {
 
 
 // =====================================================
-// SEARCH AS USER TYPES
+// LOGIN
 // =====================================================
 
-if (searchInput) {
+if (loginForm) {
 
-    searchInput.addEventListener(
-        "input",
-        () => {
+    loginForm.addEventListener(
+        "submit",
+        async (event) => {
 
-            performSearch();
-
-        }
-    );
+            event.preventDefault();
 
 
-    // ---------------------------------------------
-    // ENTER KEY
-    // ---------------------------------------------
+            hideLoginError();
 
-    searchInput.addEventListener(
-        "keydown",
-        (event) => {
 
-            if (
-                event.key === "Enter"
-            ) {
+            const email =
+                loginEmail.value.trim();
 
-                event.preventDefault();
 
-                performSearch();
+            const password =
+                loginPassword.value;
+
+
+            if (!email || !password) {
+
+                showLoginError(
+                    "Please enter your email and password."
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                console.log(
+                    "Logging in..."
+                );
+
+
+                const credential =
+                    await signInWithEmailAndPassword(
+                        auth,
+                        email,
+                        password
+                    );
+
+
+                console.log(
+                    "Login successful:",
+                    credential.user.uid
+                );
+
+
+                // -------------------------------------
+                // CLOSE MODAL
+                // -------------------------------------
+
+                closeModal(
+                    "loginModal"
+                );
+
+
+                loginForm.reset();
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "LOGIN ERROR:",
+                    error
+                );
+
+
+                showLoginError(
+                    firebaseErrorMessage(
+                        error
+                    )
+                );
 
             }
 
@@ -691,14 +534,16 @@ if (logoutButton) {
                 );
 
 
-                window.location.reload();
+                console.log(
+                    "Logged out."
+                );
 
             }
 
             catch (error) {
 
                 console.error(
-                    "Logout error:",
+                    "LOGOUT ERROR:",
                     error
                 );
 
@@ -711,10 +556,637 @@ if (logoutButton) {
 
 
 // =====================================================
-// TIMESTAMP
+// LOAD MARKETPLACE
 // =====================================================
 
-function getTimestampValue(
+async function loadListings() {
+
+    console.log(
+        "Loading listings..."
+    );
+
+
+    try {
+
+        const listingsReference =
+            collection(
+                db,
+                "listings"
+            );
+
+
+        const listingsQuery =
+            query(
+                listingsReference,
+
+                where(
+                    "status",
+                    "==",
+                    "active"
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(
+                listingsQuery
+            );
+
+
+        console.log(
+            "Listings found:",
+            snapshot.size
+        );
+
+
+        allListings = [];
+
+
+        // =============================================
+        // READ LISTINGS
+        // =============================================
+
+        for (
+            const documentSnapshot
+            of snapshot.docs
+        ) {
+
+            const listing =
+                documentSnapshot.data();
+
+
+            // -----------------------------------------
+            // SELLER
+            // -----------------------------------------
+
+            let sellerName =
+                listing.sellerName ||
+                "Seller";
+
+
+            let sellerSchool =
+                listing.school ||
+                "School not specified";
+
+
+            // -----------------------------------------
+            // FALLBACK: GET USER PROFILE
+            // -----------------------------------------
+
+            if (
+                listing.sellerId &&
+                !listing.sellerName
+            ) {
+
+                try {
+
+                    const userReference =
+                        doc(
+                            db,
+                            "users",
+                            listing.sellerId
+                        );
+
+
+                    const userSnapshot =
+                        await getDoc(
+                            userReference
+                        );
+
+
+                    if (
+                        userSnapshot.exists()
+                    ) {
+
+                        const user =
+                            userSnapshot.data();
+
+
+                        sellerName =
+                            user.sellerName ||
+                            user.name ||
+                            "Seller";
+
+
+                        sellerSchool =
+                            user.school ||
+                            sellerSchool;
+
+                    }
+
+                }
+
+                catch (error) {
+
+                    console.error(
+                        "Seller lookup failed:",
+                        error
+                    );
+
+                }
+
+            }
+
+
+            // -----------------------------------------
+            // SAVE
+            // -----------------------------------------
+
+            allListings.push({
+
+                id:
+                    documentSnapshot.id,
+
+                ...listing,
+
+                sellerName:
+                    sellerName,
+
+                sellerSchool:
+                    sellerSchool
+
+            });
+
+        }
+
+
+        // =============================================
+        // NEWEST FIRST
+        // =============================================
+
+        allListings.sort(
+            (a, b) => {
+
+                return (
+                    getTimestamp(
+                        b.createdAt
+                    )
+                    -
+                    getTimestamp(
+                        a.createdAt
+                    )
+                );
+
+            }
+        );
+
+
+        displayListings(
+            allListings
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "FIRESTORE ERROR:",
+            error
+        );
+
+
+        listingGrid.innerHTML = `
+
+            <div class="col-12">
+
+                <div class="alert alert-danger">
+
+                    <strong>
+                        Unable to load listings.
+                    </strong>
+
+                    <br>
+
+                    ${escapeHTML(
+                        error.message
+                    )}
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// =====================================================
+// DISPLAY LISTINGS
+// =====================================================
+
+function displayListings(
+    listings
+) {
+
+    listingGrid.innerHTML =
+        "";
+
+
+    if (
+        listings.length === 0
+    ) {
+
+        emptyMarketplace.classList.remove(
+            "d-none"
+        );
+
+        return;
+
+    }
+
+
+    emptyMarketplace.classList.add(
+        "d-none"
+    );
+
+
+    listings.forEach(
+        (listing) => {
+
+            createListingCard(
+                listing
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// LISTING CARD
+// =====================================================
+
+function createListingCard(
+    listing
+) {
+
+    const column =
+        document.createElement(
+            "div"
+        );
+
+
+    column.className =
+        "col";
+
+
+    // =============================================
+    // IMAGE
+    // =============================================
+
+    let image =
+        "https://placehold.co/600x450/e9f1fb/172033?text=No+Image";
+
+
+    if (
+        Array.isArray(
+            listing.images
+        ) &&
+        listing.images.length > 0
+    ) {
+
+        image =
+            listing.images[0];
+
+    }
+
+
+    // =============================================
+    // SELLER
+    // =============================================
+
+    const sellerName =
+        listing.sellerName ||
+        "Seller";
+
+
+    const sellerSchool =
+        listing.sellerSchool ||
+        listing.school ||
+        "School not specified";
+
+
+    // =============================================
+    // CARD
+    // =============================================
+
+    column.innerHTML = `
+
+        <div
+            class="card border-0 shadow-sm rounded-4 overflow-hidden h-100"
+            style="cursor:pointer;"
+        >
+
+            <!-- IMAGE -->
+
+            <img
+                src="${escapeHTML(image)}"
+                alt="${escapeHTML(
+                    listing.name ||
+                    "Item"
+                )}"
+                class="card-img-top"
+                style="
+                    height:220px;
+                    object-fit:cover;
+                "
+                onerror="
+                    this.src='https://placehold.co/600x450/e9f1fb/172033?text=Image+Unavailable'
+                "
+            >
+
+
+            <!-- BODY -->
+
+            <div class="card-body p-4">
+
+
+                <!-- CATEGORY -->
+
+                <div
+                    class="small text-secondary mb-1"
+                >
+
+                    ${escapeHTML(
+                        listing.category ||
+                        ""
+                    )}
+
+                </div>
+
+
+                <!-- NAME -->
+
+                <h5
+                    class="fw-bold mb-2"
+                >
+
+                    ${escapeHTML(
+                        listing.name ||
+                        "Untitled Item"
+                    )}
+
+                </h5>
+
+
+                <!-- PRICE -->
+
+                <div
+                    class="fs-5 fw-bold mb-3"
+                >
+
+                    ${formatPrice(
+                        listing.price
+                    )}
+
+                </div>
+
+
+                <!-- =================================
+                     SELLER
+                ================================== -->
+
+                <div
+                    class="d-flex align-items-center gap-2 mb-3"
+                >
+
+                    <div
+                        class="rounded-circle d-flex align-items-center justify-content-center"
+                        style="
+                            width:36px;
+                            height:36px;
+                            background:#eeeaff;
+                            color:#635bff;
+                        "
+                    >
+
+                        <i
+                            class="bi bi-person-fill"
+                        ></i>
+
+                    </div>
+
+
+                    <div>
+
+                        <div
+                            class="small fw-semibold"
+                        >
+
+                            ${escapeHTML(
+                                sellerName
+                            )}
+
+                        </div>
+
+
+                        <div
+                            class="small text-secondary"
+                        >
+
+                            ${escapeHTML(
+                                sellerSchool
+                            )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CONDITION -->
+
+                <div
+                    class="small text-secondary mb-2"
+                >
+
+                    <i
+                        class="bi bi-box-seam me-1"
+                    ></i>
+
+                    ${escapeHTML(
+                        listing.condition ||
+                        "Condition not specified"
+                    )}
+
+                </div>
+
+
+                <!-- LOCATION -->
+
+                <div
+                    class="small text-secondary"
+                >
+
+                    <i
+                        class="bi bi-geo-alt me-1"
+                    ></i>
+
+                    ${escapeHTML(
+                        listing.location ||
+                        "Location not specified"
+                    )}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =============================================
+    // CLICK
+    // =============================================
+
+    column
+        .querySelector(".card")
+        .addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    `item-detail.html?id=${encodeURIComponent(
+                        listing.id
+                    )}`;
+
+            }
+        );
+
+
+    listingGrid.appendChild(
+        column
+    );
+
+}
+
+
+// =====================================================
+// SEARCH
+// =====================================================
+
+if (locationSearch) {
+
+    locationSearch.addEventListener(
+        "input",
+        () => {
+
+            const search =
+                locationSearch.value
+                    .trim()
+                    .toLowerCase();
+
+
+            if (search) {
+
+                clearSearch.classList.remove(
+                    "d-none"
+                );
+
+            }
+
+            else {
+
+                clearSearch.classList.add(
+                    "d-none"
+                );
+
+            }
+
+
+            if (!search) {
+
+                displayListings(
+                    allListings
+                );
+
+                return;
+
+            }
+
+
+            const results =
+                allListings.filter(
+                    (listing) => {
+
+                        const text = `
+
+                            ${listing.name || ""}
+
+                            ${listing.category || ""}
+
+                            ${listing.sellerName || ""}
+
+                            ${listing.sellerSchool || ""}
+
+                            ${listing.school || ""}
+
+                            ${listing.location || ""}
+
+                            ${listing.description || ""}
+
+                            ${listing.condition || ""}
+
+                        `.toLowerCase();
+
+
+                        return text.includes(
+                            search
+                        );
+
+                    }
+                );
+
+
+            displayListings(
+                results
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// CLEAR SEARCH
+// =====================================================
+
+if (clearSearch) {
+
+    clearSearch.addEventListener(
+        "click",
+        () => {
+
+            locationSearch.value =
+                "";
+
+
+            clearSearch.classList.add(
+                "d-none"
+            );
+
+
+            displayListings(
+                allListings
+            );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// FIRESTORE TIMESTAMP
+// =====================================================
+
+function getTimestamp(
     timestamp
 ) {
 
@@ -792,7 +1264,145 @@ function formatPrice(
 
 
 // =====================================================
-// HTML ESCAPE
+// FIREBASE ERROR
+// =====================================================
+
+function firebaseErrorMessage(
+    error
+) {
+
+    switch (
+        error.code
+    ) {
+
+        case "auth/invalid-credential":
+            return "Incorrect email or password.";
+
+        case "auth/invalid-email":
+            return "Please enter a valid email address.";
+
+        case "auth/email-already-in-use":
+            return "An account already exists with this email.";
+
+        case "auth/weak-password":
+            return "Password must contain at least 6 characters.";
+
+        case "auth/operation-not-allowed":
+            return "Email/password authentication is not enabled in Firebase.";
+
+        case "auth/too-many-requests":
+            return "Too many attempts. Please try again later.";
+
+        default:
+            return error.message ||
+                "Something went wrong.";
+
+    }
+
+}
+
+
+// =====================================================
+// ERROR DISPLAY
+// =====================================================
+
+function showLoginError(
+    message
+) {
+
+    loginError.textContent =
+        message;
+
+    loginError.classList.remove(
+        "d-none"
+    );
+
+}
+
+
+function hideLoginError() {
+
+    loginError.textContent =
+        "";
+
+    loginError.classList.add(
+        "d-none"
+    );
+
+}
+
+
+function showSignupError(
+    message
+) {
+
+    signupError.textContent =
+        message;
+
+    signupError.classList.remove(
+        "d-none"
+    );
+
+}
+
+
+function hideSignupError() {
+
+    signupError.textContent =
+        "";
+
+    signupError.classList.add(
+        "d-none"
+    );
+
+}
+
+
+// =====================================================
+// CLOSE MODAL
+// =====================================================
+
+function closeModal(
+    id
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (!element) {
+
+        return;
+
+    }
+
+
+    if (
+        typeof bootstrap !==
+        "undefined"
+    ) {
+
+        const modal =
+            bootstrap.Modal.getInstance(
+                element
+            );
+
+
+        if (modal) {
+
+            modal.hide();
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// ESCAPE HTML
 // =====================================================
 
 function escapeHTML(
@@ -830,7 +1440,7 @@ function escapeHTML(
 
 
 // =====================================================
-// START MARKETPLACE
+// START
 // =====================================================
 
 loadListings();

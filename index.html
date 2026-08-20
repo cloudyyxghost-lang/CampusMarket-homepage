@@ -38,10 +38,7 @@
 
 
     <!-- =========================================
-         GOOGLE FONT
-         
-         Optional - Bootstrap is still doing
-         the styling.
+         GOOGLE FONTS
     ========================================== -->
 
     <link
@@ -57,8 +54,6 @@
 
     <!-- =====================================================
          OUTER MARKETPLACE CONTAINER
-         
-         This creates the rounded wireframe structure.
     ====================================================== -->
 
     <div
@@ -148,14 +143,16 @@
                         <!-- =================================
                              LOGGED OUT NAVIGATION
                              
-                             Visible when user is NOT
-                             authenticated.
+                             Login + Signup only
+                             when user is NOT logged in.
                         ================================== -->
 
                         <div
                             id="loggedOutNav"
                             class="d-flex align-items-center gap-2"
                         >
+
+                            <!-- LOGIN -->
 
                             <button
                                 type="button"
@@ -172,6 +169,8 @@
                             </span>
 
 
+                            <!-- SIGNUP -->
+
                             <button
                                 type="button"
                                 class="btn btn-link text-dark text-decoration-none fs-5 px-1"
@@ -187,14 +186,16 @@
                         <!-- =================================
                              LOGGED IN NAVIGATION
                              
-                             Hidden until Firebase says
-                             the user is authenticated.
+                             Hidden until Firebase confirms
+                             that the user is authenticated.
                         ================================== -->
 
                         <div
                             id="loggedInNav"
                             class="d-none align-items-center gap-2"
                         >
+
+                            <!-- SELL ITEMS -->
 
                             <a
                                 href="seller-dashboard.html"
@@ -209,6 +210,8 @@
                                 |
                             </span>
 
+
+                            <!-- LOGOUT -->
 
                             <button
                                 id="logoutButton"
@@ -242,19 +245,20 @@
                 style="max-width: 810px;"
             >
 
-
-                <!-- Search icon -->
+                <!-- SEARCH ICON -->
 
                 <span
                     class="input-group-text bg-light border border-dark border-end-0 rounded-start-4 px-3"
                 >
 
-                    <i class="bi bi-search fs-5 text-secondary"></i>
+                    <i
+                        class="bi bi-search fs-5 text-secondary"
+                    ></i>
 
                 </span>
 
 
-                <!-- Search input -->
+                <!-- SEARCH INPUT -->
 
                 <input
                     type="text"
@@ -265,7 +269,7 @@
                 >
 
 
-                <!-- Clear button -->
+                <!-- CLEAR SEARCH -->
 
                 <button
                     id="clearSearch"
@@ -284,12 +288,12 @@
 
         <!-- =================================================
              MARKETPLACE LISTING AREA
-             
+
              IMPORTANT:
-             This is intentionally EMPTY.
-             
-             Later Firebase/Firestore will insert the
-             actual products here.
+             No fake products are placed here.
+
+             app.js will retrieve listings from Firestore
+             and automatically insert the cards here.
         ================================================== -->
 
         <main
@@ -302,19 +306,10 @@
             >
 
                 <!--
-                    =========================================
-                    FIRESTORE LISTINGS WILL GO HERE
-                    =========================================
 
-                    We are NOT putting fake products here.
+                    FIRESTORE LISTINGS WILL APPEAR HERE.
 
-                    Later JavaScript can generate:
-
-                    <div class="col">
-                        <div class="card">
-                            ...
-                        </div>
-                    </div>
+                    app.js creates the listing cards.
 
                 -->
 
@@ -323,9 +318,9 @@
 
             <!-- =================================================
                  EMPTY MARKETPLACE MESSAGE
-                 
-                 This can be removed later when Firestore
-                 always has listings.
+
+                 This appears only when there are no
+                 active listings.
             ================================================== -->
 
             <div
@@ -394,9 +389,13 @@
             >
 
 
-                <!-- Modal Header -->
+                <!-- =========================================
+                     LOGIN MODAL HEADER
+                ========================================== -->
 
-                <div class="modal-header border-0 px-4 pt-4">
+                <div
+                    class="modal-header border-0 px-4 pt-4"
+                >
 
                     <div>
 
@@ -411,10 +410,10 @@
                         </h5>
 
 
-                        <p class="text-secondary small mb-0 mt-1">
-
+                        <p
+                            class="text-secondary small mb-0 mt-1"
+                        >
                             Login to your CampusMarket account.
-
                         </p>
 
                     </div>
@@ -430,14 +429,18 @@
                 </div>
 
 
-                <!-- Modal Body -->
+                <!-- =========================================
+                     LOGIN MODAL BODY
+                ========================================== -->
 
-                <div class="modal-body px-4 pb-4">
+                <div
+                    class="modal-body px-4 pb-4"
+                >
 
                     <form id="loginForm">
 
 
-                        <!-- Email -->
+                        <!-- EMAIL -->
 
                         <div class="mb-3">
 
@@ -460,7 +463,7 @@
                         </div>
 
 
-                        <!-- Password -->
+                        <!-- PASSWORD -->
 
                         <div class="mb-3">
 
@@ -483,7 +486,7 @@
                         </div>
 
 
-                        <!-- Error -->
+                        <!-- LOGIN ERROR -->
 
                         <div
                             id="loginError"
@@ -492,7 +495,7 @@
                         ></div>
 
 
-                        <!-- Login Button -->
+                        <!-- LOGIN BUTTON -->
 
                         <button
                             type="submit"
@@ -502,9 +505,7 @@
                                 border-color: #635bff;
                             "
                         >
-
                             Login
-
                         </button>
 
                     </form>
@@ -539,9 +540,13 @@
             >
 
 
-                <!-- Modal Header -->
+                <!-- =========================================
+                     SIGNUP MODAL HEADER
+                ========================================== -->
 
-                <div class="modal-header border-0 px-4 pt-4">
+                <div
+                    class="modal-header border-0 px-4 pt-4"
+                >
 
                     <div>
 
@@ -556,10 +561,10 @@
                         </h5>
 
 
-                        <p class="text-secondary small mb-0 mt-1">
-
+                        <p
+                            class="text-secondary small mb-0 mt-1"
+                        >
                             Join your school marketplace.
-
                         </p>
 
                     </div>
@@ -575,14 +580,72 @@
                 </div>
 
 
-                <!-- Modal Body -->
+                <!-- =========================================
+                     SIGNUP MODAL BODY
+                ========================================== -->
 
-                <div class="modal-body px-4 pb-4">
+                <div
+                    class="modal-body px-4 pb-4"
+                >
 
                     <form id="signupForm">
 
 
-                        <!-- Email -->
+                        <!-- =================================
+                             USERNAME
+                        ================================== -->
+
+                        <div class="mb-3">
+
+                            <label
+                                for="signupName"
+                                class="form-label fw-semibold"
+                            >
+                                Username
+                            </label>
+
+
+                            <input
+                                type="text"
+                                id="signupName"
+                                class="form-control form-control-lg rounded-3"
+                                placeholder="Enter your username"
+                                maxlength="40"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- =================================
+                             SCHOOL
+                        ================================== -->
+
+                        <div class="mb-3">
+
+                            <label
+                                for="signupSchool"
+                                class="form-label fw-semibold"
+                            >
+                                School
+                            </label>
+
+
+                            <input
+                                type="text"
+                                id="signupSchool"
+                                class="form-control form-control-lg rounded-3"
+                                placeholder="Enter your school"
+                                maxlength="100"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- =================================
+                             EMAIL
+                        ================================== -->
 
                         <div class="mb-3">
 
@@ -605,7 +668,9 @@
                         </div>
 
 
-                        <!-- Password -->
+                        <!-- =================================
+                             PASSWORD
+                        ================================== -->
 
                         <div class="mb-3">
 
@@ -629,7 +694,9 @@
                         </div>
 
 
-                        <!-- Error -->
+                        <!-- =================================
+                             SIGNUP ERROR
+                        ================================== -->
 
                         <div
                             id="signupError"
@@ -638,7 +705,9 @@
                         ></div>
 
 
-                        <!-- Signup Button -->
+                        <!-- =================================
+                             CREATE ACCOUNT BUTTON
+                        ================================== -->
 
                         <button
                             type="submit"
@@ -648,9 +717,7 @@
                                 border-color: #635bff;
                             "
                         >
-
                             Create Account
-
                         </button>
 
                     </form>
@@ -674,9 +741,7 @@
 
 
     <!-- =====================================================
-         FIREBASE + YOUR JAVASCRIPT
-         
-         These are separate from Bootstrap.
+         FIREBASE + APPLICATION JAVASCRIPT
     ====================================================== -->
 
     <script
