@@ -2,35 +2,50 @@ import {
     initializeApp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 
-
 import {
     getAuth
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
-
-const firebaseConfig = {
-
-    apiKey: "YOUR_API_KEY",
-
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-
-    projectId: "YOUR_PROJECT_ID",
-
-    storageBucket: "YOUR_PROJECT.firebasestorage.app",
-
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-
-    appId: "YOUR_APP_ID"
-
-};
+import {
+    getFirestore
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
-const app = initializeApp(firebaseConfig);
 
-const auth = getAuth(app);
+// Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAUe6SgfATE5SOHK2vRWtywudekAtjiYqQ",
+    authDomain: "school-marketplace-74e9e.firebaseapp.com",
+    projectId: "school-marketplace-74e9e",
+    storageBucket: "school-marketplace-74e9e.firebasestorage.app",
+    messagingSenderId: "367653544012",
+    appId: "1:367653544012:web:ddc4b891665621b3f594e9",
+    measurementId: "G-7XPRV4EPXN"
+  };
+
+
+
+const app =
+    initializeApp(
+        firebaseConfig
+    );
+
+
+const auth =
+    getAuth(
+        app
+    );
+
+
+const db =
+    getFirestore(
+        app
+    );
 
 
 export {
     app,
-    auth
+    auth,
+    db
 };

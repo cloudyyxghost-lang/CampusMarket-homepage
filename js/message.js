@@ -1,59 +1,33 @@
-// =====================================================
-// CAMPUSMARKET
-// MESSAGE PAGE
-// =====================================================
-
-import {
-    auth,
-    db
-} from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
+    collection,
     doc,
     getDoc,
-    collection,
+    getDocs,
     addDoc,
     query,
     where,
-    onSnapshot,
-    serverTimestamp,
-    updateDoc
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
 // =====================================================
-// HTML ELEMENTS
+// URL PARAMETERS
 // =====================================================
 
-const conversationHeader =
-    document.getElementById("conversationHeader");
-
-const messagesList =
-    document.getElementById("messagesList");
-
-const messageForm =
-    document.getElementById("messageForm");
-
-const messageInput =
-    document.getElementById("messageInput");
-
-const messageError =
-    document.getElementById("messageError");
-
-
-// =====================================================
-// GET CONVERSATION ID
-// =====================================================
-
-const urlParameters =
+const params =
     new URLSearchParams(window.location.search);
 
-const conversationId =
-    urlParameters.get("id");
+const itemId =
+    params.get("itemId");
+
+const sellerId =
+    params.get("sellerId");
 
 
 // =====================================================
@@ -62,11 +36,9 @@ const conversationId =
 
 let currentUser = null;
 
-let conversation = null;
-
 
 // =====================================================
-// AUTHENTICATION
+// AUTH
 // =====================================================
 
 onAuthStateChanged(
@@ -83,99 +55,452 @@ onAuthStateChanged(
 
         currentUser = user;
 
-        if (!conversationId) {
+        console.log(
+            "Logged in user:",
+            currentUser.uid
+        );
 
-            showError(
-                "Conversation not found."
+        // =============================================
+        // BUYER CLICKED MESSAGE SELLER
+        // =============================================
+
+        if (itemId && sellerId) {
+
+            console.log(
+                "Starting conversation..."
             );
+
+            console.log(
+                "Item:",
+                itemId
+            );
+
+            console.log(
+                "Seller:",
+                sellerId
+            );
+
+            await startConversation();
 
             return;
         }
 
-        await loadConversation();
 
-        if (conversation) {
+        // =============================================
+        // NORMAL INBOX
+        // =============================================
 
-            listenForMessages();
-
-        }
+        await loadInbox();
 
     }
 );
 
 
 // =====================================================
-// LOAD CONVERSATION
+// START CONVERSATION
 // =====================================================
 
-async function loadConversation() {
+async function startConversation() {
 
     try {
 
-        const conversationReference =
-            doc(
-                db,
-                "conversations",
-                conversationId
-            );
+        // ---------------------------------------------
+        // DON'T MESSAGE YOURSELF
+        // ---------------------------------------------
 
-        const conversationSnapshot =
-            await getDoc(
-                conversationReference
-            );
+        if (
+            currentUser.uid === sellerId
+        ) {
 
-        if (!conversationSnapshot.exists()) {
-
-            showError(
-                "This conversation does not exist."
+            alert(
+                "You cannot message yourself."
             );
 
             return;
         }
 
-        conversation = {
 
-            id:
-                conversationSnapshot.id,
+        // ---------------------------------------------
+        // GET LISTING
+        // ---------------------------------------------
 
-            ...conversationSnapshot.data()
+        const listingRef =
+            doc(
+                db,
+                "listings",
+                itemId
+            );
+
+        const listingSnapshot =
+            await getDoc(
+                listingRef
+            );
+
+
+        if (!listingSnapshot.exists()) {
+
+            alert(
+                "This listing could not be found."
+            );
+
+            return;
+        }
+
+
+        const listing =
+            listingSnapshot.data();
+
+
+        console.log(
+            "Listing found:",
+            listing
+        );
+
+
+        // ---------------------------------------------
+        // FIND EXISTING CONVERSATION
+        // ---------------------------------------------
+
+        const conversationsRef =
+            collection(
+                db,
+                "conversations"
+            );
+
+
+        const q =
+            query(
+                conversationsRef,
+
+                where(
+                    "participants",
+                    "array-contains",
+                    currentUser.uid
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(q);
+
+
+        let existingConversationId =
+            null;
+
+
+        snapshot.forEach(
+            (conversationDoc) => {
+
+                const data =
+                    conversationDoc.data();
+
+
+                if (
+
+                    data.listingId ===
+                    itemId
+
+                    &&
+
+                    data.sellerId ===
+                    sellerId
+
+                    &&
+
+                    data.buyerId ===
+                    currentUser.uid
+
+                ) {
+
+                    existingConversationId =
+                        conversationDoc.id;
+
+                }
+
+            }
+        );
+
+
+        // ---------------------------------------------
+        // EXISTING CONVERSATION
+        // ---------------------------------------------
+
+        if (
+            existingConversationId
+        ) {
+
+            console.log(
+                "Existing conversation:",
+                existingConversationId
+            );
+
+
+            window.location.href =
+                "message.html?id=" +
+                existingConversationId;
+
+            return;
+        }
+
+
+        // ---------------------------------------------
+        // GET SELLER
+        // ---------------------------------------------
+
+        let sellerName =
+            listing.sellerName ||
+            "Seller";
+
+        let sellerSchool =
+            listing.school ||
+            listing.sellerSchool ||
+            "";
+
+
+        try {
+
+            const sellerRef =
+                doc(
+                    db,
+                    "users",
+                    sellerId
+                );
+
+
+            const sellerSnapshot =
+                await getDoc(
+                    sellerRef
+                );
+
+
+            if (
+                sellerSnapshot.exists()
+            ) {
+
+                const seller =
+                    sellerSnapshot.data();
+
+
+                sellerName =
+                    seller.sellerName ||
+                    seller.username ||
+                    seller.name ||
+                    sellerName;
+
+
+                sellerSchool =
+                    seller.school ||
+                    sellerSchool;
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Could not load seller profile:",
+                error
+            );
+
+        }
+
+
+        // ---------------------------------------------
+        // GET BUYER
+        // ---------------------------------------------
+
+        let buyerName =
+            "Buyer";
+
+        let buyerSchool =
+            "";
+
+
+        try {
+
+            const buyerRef =
+                doc(
+                    db,
+                    "users",
+                    currentUser.uid
+                );
+
+
+            const buyerSnapshot =
+                await getDoc(
+                    buyerRef
+                );
+
+
+            if (
+                buyerSnapshot.exists()
+            ) {
+
+                const buyer =
+                    buyerSnapshot.data();
+
+
+                buyerName =
+                    buyer.sellerName ||
+                    buyer.username ||
+                    buyer.name ||
+                    "Buyer";
+
+
+                buyerSchool =
+                    buyer.school ||
+                    "";
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Could not load buyer profile:",
+                error
+            );
+
+        }
+
+
+        // ---------------------------------------------
+        // LISTING IMAGE
+        // ---------------------------------------------
+
+        let listingImage =
+            "";
+
+
+        if (
+            Array.isArray(
+                listing.images
+            )
+        ) {
+
+            if (
+                listing.images.length > 0
+            ) {
+
+                listingImage =
+                    listing.images[0];
+
+            }
+
+        }
+
+
+        if (
+            !listingImage &&
+            listing.imageUrl
+        ) {
+
+            listingImage =
+                listing.imageUrl;
+
+        }
+
+
+        // ---------------------------------------------
+        // CREATE CONVERSATION
+        // ---------------------------------------------
+
+        const conversation = {
+
+            buyerId:
+                currentUser.uid,
+
+            buyerName:
+                buyerName,
+
+            buyerSchool:
+                buyerSchool,
+
+
+            sellerId:
+                sellerId,
+
+            sellerName:
+                sellerName,
+
+            sellerSchool:
+                sellerSchool,
+
+
+            listingId:
+                itemId,
+
+            listingName:
+                listing.name ||
+                listing.itemName ||
+                "Item",
+
+            listingImage:
+                listingImage,
+
+
+            participants: [
+
+                currentUser.uid,
+
+                sellerId
+
+            ],
+
+
+            lastMessage:
+                "",
+
+            lastMessageAt:
+                serverTimestamp(),
+
+            createdAt:
+                serverTimestamp()
 
         };
 
 
-        // =============================================
-        // SECURITY CHECK
-        // =============================================
+        console.log(
+            "Creating conversation:",
+            conversation
+        );
 
-        if (
-            !conversation.participants ||
-            !conversation.participants.includes(
-                currentUser.uid
-            )
-        ) {
 
-            showError(
-                "You do not have access to this conversation."
+        const newConversation =
+            await addDoc(
+                conversationsRef,
+                conversation
             );
 
-            conversation = null;
 
-            return;
-        }
+        console.log(
+            "Conversation created:",
+            newConversation.id
+        );
 
 
-        renderConversationHeader();
+        // ---------------------------------------------
+        // OPEN CHAT
+        // ---------------------------------------------
+
+        window.location.href =
+            "message.html?id=" +
+            newConversation.id;
 
     }
 
     catch (error) {
 
         console.error(
-            "LOAD CONVERSATION ERROR:",
+            "START CONVERSATION ERROR:",
             error
         );
 
-        showError(
+
+        alert(
+            "Unable to start conversation:\n\n" +
             error.message
         );
 
@@ -185,97 +510,215 @@ async function loadConversation() {
 
 
 // =====================================================
-// CONVERSATION HEADER
+// NORMAL INBOX
 // =====================================================
 
-function renderConversationHeader() {
+async function loadInbox() {
+
+    const conversationList =
+        document.getElementById(
+            "conversationList"
+        );
+
+    const emptyMessages =
+        document.getElementById(
+            "emptyMessages"
+        );
+
+
+    if (!conversationList) {
+
+        console.error(
+            "conversationList element not found."
+        );
+
+        return;
+    }
+
+
+    try {
+
+        const conversationsRef =
+            collection(
+                db,
+                "conversations"
+            );
+
+
+        const q =
+            query(
+                conversationsRef,
+
+                where(
+                    "participants",
+                    "array-contains",
+                    currentUser.uid
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(q);
+
+
+        conversationList.innerHTML =
+            "";
+
+
+        if (
+            snapshot.empty
+        ) {
+
+            if (emptyMessages) {
+
+                emptyMessages.classList.remove(
+                    "d-none"
+                );
+
+            }
+
+            return;
+        }
+
+
+        if (emptyMessages) {
+
+            emptyMessages.classList.add(
+                "d-none"
+            );
+
+        }
+
+
+        snapshot.forEach(
+            (conversationDoc) => {
+
+                const data =
+                    conversationDoc.data();
+
+
+                createConversationCard(
+                    conversationDoc.id,
+                    data,
+                    conversationList
+                );
+
+            }
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "LOAD INBOX ERROR:",
+            error
+        );
+
+        alert(
+            error.message
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// CONVERSATION CARD
+// =====================================================
+
+function createConversationCard(
+    conversationId,
+    data,
+    container
+) {
 
     const isBuyer =
-        conversation.buyerId ===
+        data.buyerId ===
         currentUser.uid;
 
 
     const otherName =
         isBuyer
-            ? conversation.sellerName
-            : conversation.buyerName;
+            ? data.sellerName
+            : data.buyerName;
 
 
-    const otherSchool =
-        isBuyer
-            ? conversation.sellerSchool
-            : conversation.buyerSchool;
+    const image =
+        data.listingImage ||
+        "https://placehold.co/100x100";
 
 
-    let image =
-        "https://placehold.co/120x120/e9e7ff/635bff?text=Item";
+    const card =
+        document.createElement(
+            "a"
+        );
 
 
-    if (
-        conversation.listingImage
-    ) {
-
-        image =
-            conversation.listingImage;
-
-    }
+    card.href =
+        "message.html?id=" +
+        conversationId;
 
 
-    conversationHeader.innerHTML = `
+    card.className =
+        "text-decoration-none text-dark";
+
+
+    card.innerHTML = `
 
         <div
-            class="d-flex align-items-center gap-3"
+            class="card border-0 shadow-sm rounded-4 mb-3"
         >
 
-            <img
-                src="${escapeHTML(image)}"
-                alt="${escapeHTML(
-                    conversation.listingName ||
-                    "Item"
-                )}"
-                class="rounded-3"
-                style="
-                    width:80px;
-                    height:80px;
-                    object-fit:cover;
-                "
-                onerror="
-                    this.src='https://placehold.co/120x120/e9e7ff/635bff?text=Item'
-                "
+            <div
+                class="card-body"
             >
 
-            <div>
+                <div
+                    class="d-flex align-items-center gap-3"
+                >
 
-                <div class="small text-secondary">
-                    Conversation about
-                </div>
+                    <img
+                        src="${escapeHTML(image)}"
+                        style="
+                            width:70px;
+                            height:70px;
+                            object-fit:cover;
+                        "
+                        class="rounded-3"
+                    >
 
-                <h4 class="fw-bold mb-1">
-                    ${escapeHTML(
-                        conversation.listingName ||
-                        "Item"
-                    )}
-                </h4>
+                    <div>
 
-                <div class="small text-secondary">
+                        <h5 class="fw-bold mb-1">
 
-                    Talking with
+                            ${escapeHTML(
+                                data.listingName ||
+                                "Item"
+                            )}
 
-                    <strong>
-                        ${escapeHTML(
-                            otherName ||
-                            "User"
-                        )}
-                    </strong>
+                        </h5>
 
-                    ${
-                        otherSchool
-                            ? " · " +
-                              escapeHTML(
-                                  otherSchool
-                              )
-                            : ""
-                    }
+                        <div>
+
+                            ${escapeHTML(
+                                otherName ||
+                                "User"
+                            )}
+
+                        </div>
+
+                        <small class="text-secondary">
+
+                            ${
+                                data.lastMessage ||
+                                "No messages yet."
+                            }
+
+                        </small>
+
+                    </div>
 
                 </div>
 
@@ -285,548 +728,9 @@ function renderConversationHeader() {
 
     `;
 
-}
 
-
-// =====================================================
-// LISTEN FOR MESSAGES
-// =====================================================
-
-function listenForMessages() {
-
-    const messagesReference =
-        collection(
-            db,
-            "messages"
-        );
-
-
-    /*
-     * IMPORTANT:
-     *
-     * We only use where().
-     *
-     * We DO NOT use orderBy().
-     *
-     * This means Firebase does not require
-     * a composite index.
-     */
-
-    const messagesQuery =
-        query(
-
-            messagesReference,
-
-            where(
-                "conversationId",
-                "==",
-                conversationId
-            )
-
-        );
-
-
-    onSnapshot(
-
-        messagesQuery,
-
-        (snapshot) => {
-
-            messagesList.innerHTML =
-                "";
-
-
-            const messages = [];
-
-
-            // =========================================
-            // GET MESSAGES
-            // =========================================
-
-            snapshot.forEach(
-                (documentSnapshot) => {
-
-                    messages.push({
-
-                        id:
-                            documentSnapshot.id,
-
-                        ...documentSnapshot.data()
-
-                    });
-
-                }
-            );
-
-
-            // =========================================
-            // SORT IN JAVASCRIPT
-            // =========================================
-
-            messages.sort(
-                (a, b) => {
-
-                    const timeA =
-                        getMessageTime(
-                            a.createdAt
-                        );
-
-                    const timeB =
-                        getMessageTime(
-                            b.createdAt
-                        );
-
-                    return timeA - timeB;
-
-                }
-            );
-
-
-            // =========================================
-            // EMPTY CONVERSATION
-            // =========================================
-
-            if (
-                messages.length === 0
-            ) {
-
-                messagesList.innerHTML = `
-
-                    <div
-                        class="text-center text-secondary py-5"
-                    >
-
-                        <i
-                            class="bi bi-chat-dots fs-1 d-block mb-3"
-                        ></i>
-
-                        <div>
-                            Start the conversation.
-                        </div>
-
-                    </div>
-
-                `;
-
-                return;
-            }
-
-
-            // =========================================
-            // DISPLAY
-            // =========================================
-
-            messages.forEach(
-                (message) => {
-
-                    renderMessage(
-                        message
-                    );
-
-                }
-            );
-
-
-            // =========================================
-            // SCROLL DOWN
-            // =========================================
-
-            messagesList.scrollTop =
-                messagesList.scrollHeight;
-
-        },
-
-        (error) => {
-
-            console.error(
-                "MESSAGE LISTENER ERROR:",
-                error
-            );
-
-            showError(
-                error.message
-            );
-
-        }
-
-    );
-
-}
-
-
-// =====================================================
-// RENDER MESSAGE
-// =====================================================
-
-function renderMessage(
-    message
-) {
-
-    const isMine =
-        message.senderId ===
-        currentUser.uid;
-
-
-    const wrapper =
-        document.createElement(
-            "div"
-        );
-
-
-    wrapper.className =
-        "d-flex mb-3";
-
-
-    if (isMine) {
-
-        wrapper.classList.add(
-            "justify-content-end"
-        );
-
-    }
-
-    else {
-
-        wrapper.classList.add(
-            "justify-content-start"
-        );
-
-    }
-
-
-    const bubble =
-        document.createElement(
-            "div"
-        );
-
-
-    bubble.className =
-        "p-3 rounded-4";
-
-
-    bubble.style.maxWidth =
-        "75%";
-
-
-    if (isMine) {
-
-        bubble.style.backgroundColor =
-            "#635bff";
-
-        bubble.style.color =
-            "white";
-
-    }
-
-    else {
-
-        bubble.style.backgroundColor =
-            "#f1f1f1";
-
-        bubble.style.color =
-            "#212529";
-
-    }
-
-
-    bubble.innerHTML = `
-
-        <div>
-            ${escapeHTML(
-                message.text || ""
-            )}
-        </div>
-
-        <div
-            class="small mt-1 ${
-                isMine
-                    ? "text-white-50"
-                    : "text-secondary"
-            }"
-        >
-
-            ${formatMessageTime(
-                message.createdAt
-            )}
-
-        </div>
-
-    `;
-
-
-    wrapper.appendChild(
-        bubble
-    );
-
-
-    messagesList.appendChild(
-        wrapper
-    );
-
-}
-
-
-// =====================================================
-// SEND MESSAGE
-// =====================================================
-
-messageForm.addEventListener(
-    "submit",
-    async (event) => {
-
-        event.preventDefault();
-
-
-        const text =
-            messageInput.value.trim();
-
-
-        if (!text) {
-
-            return;
-
-        }
-
-
-        if (!conversation) {
-
-            showError(
-                "Conversation is not loaded."
-            );
-
-            return;
-
-        }
-
-
-        try {
-
-            // =========================================
-            // DISABLE INPUT
-            // =========================================
-
-            messageInput.disabled =
-                true;
-
-
-            // =========================================
-            // CREATE MESSAGE
-            // =========================================
-
-            await addDoc(
-
-                collection(
-                    db,
-                    "messages"
-                ),
-
-                {
-
-                    conversationId:
-                        conversationId,
-
-                    senderId:
-                        currentUser.uid,
-
-                    senderName:
-                        getCurrentUserName(),
-
-                    text:
-                        text,
-
-                    createdAt:
-                        serverTimestamp()
-
-                }
-
-            );
-
-
-            // =========================================
-            // UPDATE CONVERSATION
-            // =========================================
-
-            const conversationReference =
-                doc(
-                    db,
-                    "conversations",
-                    conversationId
-                );
-
-
-            await updateDoc(
-
-                conversationReference,
-
-                {
-
-                    lastMessage:
-                        text,
-
-                    lastMessageAt:
-                        serverTimestamp()
-
-                }
-
-            );
-
-
-            // =========================================
-            // CLEAR INPUT
-            // =========================================
-
-            messageInput.value =
-                "";
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "SEND MESSAGE ERROR:",
-                error
-            );
-
-            showError(
-                "Unable to send message: " +
-                error.message
-            );
-
-        }
-
-        finally {
-
-            messageInput.disabled =
-                false;
-
-            messageInput.focus();
-
-        }
-
-    }
-);
-
-
-// =====================================================
-// GET CURRENT USER NAME
-// =====================================================
-
-function getCurrentUserName() {
-
-    if (
-        conversation.buyerId ===
-        currentUser.uid
-    ) {
-
-        return (
-            conversation.buyerName ||
-            "User"
-        );
-
-    }
-
-
-    return (
-        conversation.sellerName ||
-        "User"
-    );
-
-}
-
-
-// =====================================================
-// MESSAGE TIME
-// =====================================================
-
-function getMessageTime(
-    timestamp
-) {
-
-    if (!timestamp) {
-
-        return 0;
-
-    }
-
-
-    if (
-        typeof timestamp.toMillis ===
-        "function"
-    ) {
-
-        return timestamp.toMillis();
-
-    }
-
-
-    return 0;
-
-}
-
-
-// =====================================================
-// FORMAT MESSAGE TIME
-// =====================================================
-
-function formatMessageTime(
-    timestamp
-) {
-
-    if (!timestamp) {
-
-        return "Sending...";
-
-    }
-
-
-    if (
-        typeof timestamp.toDate !==
-        "function"
-    ) {
-
-        return "Sending...";
-
-    }
-
-
-    const date =
-        timestamp.toDate();
-
-
-    return date.toLocaleTimeString(
-        "en-US",
-        {
-            hour: "numeric",
-            minute: "2-digit"
-        }
-    );
-
-}
-
-
-// =====================================================
-// ERROR
-// =====================================================
-
-function showError(
-    message
-) {
-
-    if (!messageError) {
-
-        alert(message);
-
-        return;
-
-    }
-
-
-    messageError.textContent =
-        message;
-
-
-    messageError.classList.remove(
-        "d-none"
+    container.appendChild(
+        card
     );
 
 }
