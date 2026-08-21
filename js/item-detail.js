@@ -561,15 +561,27 @@ messageSellerButton.addEventListener(
         // ---------------------------------------------
         // User is logged in
         // ---------------------------------------------
-        //
-        // We will build the actual messaging system
-        // next.
-        //
-        // For now, go to the conversation page.
-        // ---------------------------------------------
+
+        if (
+            !currentItem ||
+            !currentItem.id ||
+            !currentItem.sellerId
+        ) {
+
+            showError(
+                "This listing is missing seller information, so a message cannot be started."
+            );
+
+            return;
+
+        }
 
         window.location.href =
-            `messages.html?itemId=${currentItem.id}&sellerId=${currentItem.sellerId}`;
+            `messages.html?itemId=${encodeURIComponent(
+                currentItem.id
+            )}&sellerId=${encodeURIComponent(
+                currentItem.sellerId
+            )}`;
 
     }
 );

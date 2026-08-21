@@ -378,6 +378,17 @@ async function startConversation() {
         }
 
 
+        if (
+            !listingImage &&
+            listing.imageUrl
+        ) {
+
+            listingImage =
+                listing.imageUrl;
+
+        }
+
+
         // ---------------------------------------------
         // BUYER NAME
         // ---------------------------------------------
@@ -452,6 +463,7 @@ async function startConversation() {
 
             listingName:
                 listing.name ||
+                listing.itemName ||
                 "Item",
 
             listingImage:

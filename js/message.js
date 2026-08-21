@@ -1,45 +1,55 @@
-import { auth, db } from "./firebase-config.js";
+// =====================================================
+// CAMPUSMARKET
+// CONVERSATION DETAIL
+// =====================================================
+
+import {
+    auth,
+    db
+} from "./firebase-config.js";
 
 import {
     onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
+    addDoc,
     collection,
     doc,
     getDoc,
-    getDocs,
-    addDoc,
+    onSnapshot,
+    orderBy,
     query,
-    where,
-    serverTimestamp
+    serverTimestamp,
+    updateDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+const conversationHeader =
+    document.getElementById("conversationHeader");
 
-// =====================================================
-// URL PARAMETERS
-// =====================================================
+const messagesList =
+    document.getElementById("messagesList");
 
-const params =
+const messageError =
+    document.getElementById("messageError");
+
+const messageForm =
+    document.getElementById("messageForm");
+
+const messageInput =
+    document.getElementById("messageInput");
+
+const urlParameters =
     new URLSearchParams(window.location.search);
 
-const itemId =
-    params.get("itemId");
-
-const sellerId =
-    params.get("sellerId");
-
-
-// =====================================================
-// CURRENT USER
-// =====================================================
+const conversationId =
+    urlParameters.get("id");
 
 let currentUser = null;
 
+let currentConversation = null;
 
-// =====================================================
-// AUTH
-// =====================================================
+let unsubscribeMessages = null;
 
 onAuthStateChanged(
     auth,
@@ -51,672 +61,184 @@ onAuthStateChanged(
                 "index.html";
 
             return;
+
         }
 
-        currentUser = user;
+        currentUser =
+            user;
 
-        console.log(
-            "Logged in user:",
-            currentUser.uid
-        );
+        if (!conversationId) {
 
-        // =============================================
-        // BUYER CLICKED MESSAGE SELLER
-        // =============================================
-
-        if (itemId && sellerId) {
-
-            console.log(
-                "Starting conversation..."
+            showError(
+                "No conversation was selected."
             );
 
-            console.log(
-                "Item:",
-                itemId
-            );
-
-            console.log(
-                "Seller:",
-                sellerId
-            );
-
-            await startConversation();
+            setFormEnabled(false);
 
             return;
+
         }
 
-
-        // =============================================
-        // NORMAL INBOX
-        // =============================================
-
-        await loadInbox();
+        await loadConversation();
 
     }
 );
 
-
-// =====================================================
-// START CONVERSATION
-// =====================================================
-
-async function startConversation() {
+async function loadConversation() {
 
     try {
 
-        // ---------------------------------------------
-        // DON'T MESSAGE YOURSELF
-        // ---------------------------------------------
-
-        if (
-            currentUser.uid === sellerId
-        ) {
-
-            alert(
-                "You cannot message yourself."
-            );
-
-            return;
-        }
-
-
-        // ---------------------------------------------
-        // GET LISTING
-        // ---------------------------------------------
-
-        const listingRef =
+        const conversationReference =
             doc(
                 db,
-                "listings",
-                itemId
+                "conversations",
+                conversationId
             );
 
-        const listingSnapshot =
-            await getDoc(
-                listingRef
+        const conversationSnapshot =
+            await getDoc(conversationReference);
+
+        if (!conversationSnapshot.exists()) {
+
+            showError(
+                "This conversation could not be found."
             );
 
-
-        if (!listingSnapshot.exists()) {
-
-            alert(
-                "This listing could not be found."
-            );
+            setFormEnabled(false);
 
             return;
+
         }
 
-
-        const listing =
-            listingSnapshot.data();
-
-
-        console.log(
-            "Listing found:",
-            listing
-        );
-
-
-        // ---------------------------------------------
-        // FIND EXISTING CONVERSATION
-        // ---------------------------------------------
-
-        const conversationsRef =
-            collection(
-                db,
-                "conversations"
-            );
-
-
-        const q =
-            query(
-                conversationsRef,
-
-                where(
-                    "participants",
-                    "array-contains",
-                    currentUser.uid
-                )
-            );
-
-
-        const snapshot =
-            await getDocs(q);
-
-
-        let existingConversationId =
-            null;
-
-
-        snapshot.forEach(
-            (conversationDoc) => {
-
-                const data =
-                    conversationDoc.data();
-
-
-                if (
-
-                    data.listingId ===
-                    itemId
-
-                    &&
-
-                    data.sellerId ===
-                    sellerId
-
-                    &&
-
-                    data.buyerId ===
-                    currentUser.uid
-
-                ) {
-
-                    existingConversationId =
-                        conversationDoc.id;
-
-                }
-
-            }
-        );
-
-
-        // ---------------------------------------------
-        // EXISTING CONVERSATION
-        // ---------------------------------------------
+        const conversation =
+            conversationSnapshot.data();
 
         if (
-            existingConversationId
+            !Array.isArray(conversation.participants) ||
+            !conversation.participants.includes(currentUser.uid)
         ) {
 
-            console.log(
-                "Existing conversation:",
-                existingConversationId
+            showError(
+                "You do not have access to this conversation."
             );
 
-
-            window.location.href =
-                "message.html?id=" +
-                existingConversationId;
+            setFormEnabled(false);
 
             return;
-        }
-
-
-        // ---------------------------------------------
-        // GET SELLER
-        // ---------------------------------------------
-
-        let sellerName =
-            listing.sellerName ||
-            "Seller";
-
-        let sellerSchool =
-            listing.school ||
-            listing.sellerSchool ||
-            "";
-
-
-        try {
-
-            const sellerRef =
-                doc(
-                    db,
-                    "users",
-                    sellerId
-                );
-
-
-            const sellerSnapshot =
-                await getDoc(
-                    sellerRef
-                );
-
-
-            if (
-                sellerSnapshot.exists()
-            ) {
-
-                const seller =
-                    sellerSnapshot.data();
-
-
-                sellerName =
-                    seller.sellerName ||
-                    seller.username ||
-                    seller.name ||
-                    sellerName;
-
-
-                sellerSchool =
-                    seller.school ||
-                    sellerSchool;
-
-            }
 
         }
 
-        catch (error) {
+        currentConversation = {
 
-            console.log(
-                "Could not load seller profile:",
-                error
-            );
+            id:
+                conversationSnapshot.id,
 
-        }
-
-
-        // ---------------------------------------------
-        // GET BUYER
-        // ---------------------------------------------
-
-        let buyerName =
-            "Buyer";
-
-        let buyerSchool =
-            "";
-
-
-        try {
-
-            const buyerRef =
-                doc(
-                    db,
-                    "users",
-                    currentUser.uid
-                );
-
-
-            const buyerSnapshot =
-                await getDoc(
-                    buyerRef
-                );
-
-
-            if (
-                buyerSnapshot.exists()
-            ) {
-
-                const buyer =
-                    buyerSnapshot.data();
-
-
-                buyerName =
-                    buyer.sellerName ||
-                    buyer.username ||
-                    buyer.name ||
-                    "Buyer";
-
-
-                buyerSchool =
-                    buyer.school ||
-                    "";
-
-            }
-
-        }
-
-        catch (error) {
-
-            console.log(
-                "Could not load buyer profile:",
-                error
-            );
-
-        }
-
-
-        // ---------------------------------------------
-        // LISTING IMAGE
-        // ---------------------------------------------
-
-        let listingImage =
-            "";
-
-
-        if (
-            Array.isArray(
-                listing.images
-            )
-        ) {
-
-            if (
-                listing.images.length > 0
-            ) {
-
-                listingImage =
-                    listing.images[0];
-
-            }
-
-        }
-
-
-        if (
-            !listingImage &&
-            listing.imageUrl
-        ) {
-
-            listingImage =
-                listing.imageUrl;
-
-        }
-
-
-        // ---------------------------------------------
-        // CREATE CONVERSATION
-        // ---------------------------------------------
-
-        const conversation = {
-
-            buyerId:
-                currentUser.uid,
-
-            buyerName:
-                buyerName,
-
-            buyerSchool:
-                buyerSchool,
-
-
-            sellerId:
-                sellerId,
-
-            sellerName:
-                sellerName,
-
-            sellerSchool:
-                sellerSchool,
-
-
-            listingId:
-                itemId,
-
-            listingName:
-                listing.name ||
-                listing.itemName ||
-                "Item",
-
-            listingImage:
-                listingImage,
-
-
-            participants: [
-
-                currentUser.uid,
-
-                sellerId
-
-            ],
-
-
-            lastMessage:
-                "",
-
-            lastMessageAt:
-                serverTimestamp(),
-
-            createdAt:
-                serverTimestamp()
+            ...conversation
 
         };
 
+        renderConversationHeader();
 
-        console.log(
-            "Creating conversation:",
-            conversation
-        );
+        listenForMessages();
 
-
-        const newConversation =
-            await addDoc(
-                conversationsRef,
-                conversation
-            );
-
-
-        console.log(
-            "Conversation created:",
-            newConversation.id
-        );
-
-
-        // ---------------------------------------------
-        // OPEN CHAT
-        // ---------------------------------------------
-
-        window.location.href =
-            "message.html?id=" +
-            newConversation.id;
+        setFormEnabled(true);
 
     }
 
     catch (error) {
 
         console.error(
-            "START CONVERSATION ERROR:",
+            "LOAD CONVERSATION ERROR:",
             error
         );
 
-
-        alert(
-            "Unable to start conversation:\n\n" +
+        showError(
+            "Unable to load this conversation: " +
             error.message
         );
+
+        setFormEnabled(false);
 
     }
 
 }
 
-
-// =====================================================
-// NORMAL INBOX
-// =====================================================
-
-async function loadInbox() {
-
-    const conversationList =
-        document.getElementById(
-            "conversationList"
-        );
-
-    const emptyMessages =
-        document.getElementById(
-            "emptyMessages"
-        );
-
-
-    if (!conversationList) {
-
-        console.error(
-            "conversationList element not found."
-        );
-
-        return;
-    }
-
-
-    try {
-
-        const conversationsRef =
-            collection(
-                db,
-                "conversations"
-            );
-
-
-        const q =
-            query(
-                conversationsRef,
-
-                where(
-                    "participants",
-                    "array-contains",
-                    currentUser.uid
-                )
-            );
-
-
-        const snapshot =
-            await getDocs(q);
-
-
-        conversationList.innerHTML =
-            "";
-
-
-        if (
-            snapshot.empty
-        ) {
-
-            if (emptyMessages) {
-
-                emptyMessages.classList.remove(
-                    "d-none"
-                );
-
-            }
-
-            return;
-        }
-
-
-        if (emptyMessages) {
-
-            emptyMessages.classList.add(
-                "d-none"
-            );
-
-        }
-
-
-        snapshot.forEach(
-            (conversationDoc) => {
-
-                const data =
-                    conversationDoc.data();
-
-
-                createConversationCard(
-                    conversationDoc.id,
-                    data,
-                    conversationList
-                );
-
-            }
-        );
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "LOAD INBOX ERROR:",
-            error
-        );
-
-        alert(
-            error.message
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// CONVERSATION CARD
-// =====================================================
-
-function createConversationCard(
-    conversationId,
-    data,
-    container
-) {
+function renderConversationHeader() {
 
     const isBuyer =
-        data.buyerId ===
+        currentConversation.buyerId ===
         currentUser.uid;
-
 
     const otherName =
         isBuyer
-            ? data.sellerName
-            : data.buyerName;
+            ? currentConversation.sellerName
+            : currentConversation.buyerName;
 
+    const otherSchool =
+        isBuyer
+            ? currentConversation.sellerSchool
+            : currentConversation.buyerSchool;
 
     const image =
-        data.listingImage ||
-        "https://placehold.co/100x100";
+        currentConversation.listingImage ||
+        "https://placehold.co/120x120/e9e7ff/635bff?text=Item";
 
+    conversationHeader.innerHTML = `
 
-    const card =
-        document.createElement(
-            "a"
-        );
+        <div class="card-body p-3 p-md-4">
 
+            <div class="d-flex align-items-center gap-3">
 
-    card.href =
-        "message.html?id=" +
-        conversationId;
-
-
-    card.className =
-        "text-decoration-none text-dark";
-
-
-    card.innerHTML = `
-
-        <div
-            class="card border-0 shadow-sm rounded-4 mb-3"
-        >
-
-            <div
-                class="card-body"
-            >
-
-                <div
-                    class="d-flex align-items-center gap-3"
+                <a
+                    href="item-detail.html?id=${encodeURIComponent(
+                        currentConversation.listingId || ""
+                    )}"
+                    class="d-block"
                 >
 
                     <img
                         src="${escapeHTML(image)}"
+                        alt="${escapeHTML(
+                            currentConversation.listingName ||
+                            "Item"
+                        )}"
+                        class="rounded-3"
                         style="
-                            width:70px;
-                            height:70px;
+                            width:76px;
+                            height:76px;
                             object-fit:cover;
                         "
-                        class="rounded-3"
+                        onerror="
+                            this.src='https://placehold.co/120x120/e9e7ff/635bff?text=Item'
+                        "
                     >
 
-                    <div>
+                </a>
 
-                        <h5 class="fw-bold mb-1">
+                <div class="flex-grow-1">
 
-                            ${escapeHTML(
-                                data.listingName ||
-                                "Item"
-                            )}
+                    <div class="small text-secondary">
 
-                        </h5>
+                        Conversation with
+                        ${escapeHTML(otherName || "User")}
 
-                        <div>
+                    </div>
 
-                            ${escapeHTML(
-                                otherName ||
-                                "User"
-                            )}
+                    <h2
+                        class="h4 fw-bold mb-1"
+                        style="font-family:'Space Grotesk',sans-serif;"
+                    >
 
-                        </div>
+                        ${escapeHTML(
+                            currentConversation.listingName ||
+                            "Item"
+                        )}
 
-                        <small class="text-secondary">
+                    </h2>
 
-                            ${
-                                data.lastMessage ||
-                                "No messages yet."
-                            }
+                    <div class="small text-secondary">
 
-                        </small>
+                        ${escapeHTML(otherSchool || "")}
 
                     </div>
 
@@ -728,44 +250,439 @@ function createConversationCard(
 
     `;
 
+}
 
-    container.appendChild(
-        card
+function listenForMessages() {
+
+    if (unsubscribeMessages) {
+
+        unsubscribeMessages();
+
+    }
+
+    const messagesReference =
+        collection(
+            db,
+            "conversations",
+            conversationId,
+            "messages"
+        );
+
+    const messagesQuery =
+        query(
+            messagesReference,
+            orderBy("createdAt", "asc")
+        );
+
+    unsubscribeMessages =
+        onSnapshot(
+            messagesQuery,
+            (snapshot) => {
+
+                const messages = [];
+
+                snapshot.forEach(
+                    (messageDocument) => {
+
+                        messages.push({
+
+                            id:
+                                messageDocument.id,
+
+                            ...messageDocument.data()
+
+                        });
+
+                    }
+                );
+
+                renderMessages(messages);
+
+            },
+            (error) => {
+
+                console.error(
+                    "MESSAGES SNAPSHOT ERROR:",
+                    error
+                );
+
+                showError(
+                    "Unable to load messages: " +
+                    error.message
+                );
+
+            }
+        );
+
+}
+
+function renderMessages(messages) {
+
+    messagesList.innerHTML =
+        "";
+
+    if (messages.length === 0) {
+
+        messagesList.innerHTML = `
+
+            <div
+                class="h-100 d-flex align-items-center justify-content-center text-center text-secondary"
+            >
+
+                <div>
+
+                    <i class="bi bi-chat-dots fs-2"></i>
+
+                    <div class="mt-2">
+
+                        Send the first message about this item.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+    messages.forEach(
+        (message) => {
+
+            createMessageBubble(message);
+
+        }
+    );
+
+    messagesList.scrollTop =
+        messagesList.scrollHeight;
+
+}
+
+function createMessageBubble(message) {
+
+    const isMine =
+        message.senderId ===
+        currentUser.uid;
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        "d-flex mb-3 " +
+        (
+            isMine
+                ? "justify-content-end"
+                : "justify-content-start"
+        );
+
+    const sentAt =
+        formatMessageTime(
+            message.createdAt
+        );
+
+    row.innerHTML = `
+
+        <div
+            class="${
+                isMine
+                    ? "text-white"
+                    : "text-dark bg-light border"
+            } rounded-4 px-3 py-2"
+            style="
+                max-width:min(75%, 560px);
+                background-color:${isMine ? "#635bff" : ""};
+                overflow-wrap:anywhere;
+            "
+        >
+
+            <div>
+
+                ${escapeHTML(message.text || "")}
+
+            </div>
+
+            <div
+                class="small mt-1 ${
+                    isMine
+                        ? "text-white-50"
+                        : "text-secondary"
+                }"
+            >
+
+                ${escapeHTML(sentAt)}
+
+            </div>
+
+        </div>
+
+    `;
+
+    messagesList.appendChild(row);
+
+}
+
+messageForm.addEventListener(
+    "submit",
+    async (event) => {
+
+        event.preventDefault();
+
+        hideError();
+
+        if (
+            !currentConversation ||
+            !currentUser
+        ) {
+
+            showError(
+                "This conversation is not ready yet."
+            );
+
+            return;
+
+        }
+
+        const text =
+            messageInput.value.trim();
+
+        if (!text) {
+
+            return;
+
+        }
+
+        const submitButton =
+            messageForm.querySelector(
+                "button[type='submit']"
+            );
+
+        submitButton.disabled =
+            true;
+
+        messageInput.disabled =
+            true;
+
+        try {
+
+            const messagesReference =
+                collection(
+                    db,
+                    "conversations",
+                    conversationId,
+                    "messages"
+                );
+
+            await addDoc(
+                messagesReference,
+                {
+
+                    text:
+                        text,
+
+                    senderId:
+                        currentUser.uid,
+
+                    senderName:
+                        getCurrentUserName(),
+
+                    createdAt:
+                        serverTimestamp()
+
+                }
+            );
+
+            await updateDoc(
+                doc(
+                    db,
+                    "conversations",
+                    conversationId
+                ),
+                {
+
+                    lastMessage:
+                        text,
+
+                    lastMessageAt:
+                        serverTimestamp(),
+
+                    lastSenderId:
+                        currentUser.uid
+
+                }
+            );
+
+            messageInput.value =
+                "";
+
+            messageInput.focus();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "SEND MESSAGE ERROR:",
+                error
+            );
+
+            showError(
+                "Unable to send your message: " +
+                error.message
+            );
+
+        }
+
+        finally {
+
+            submitButton.disabled =
+                false;
+
+            messageInput.disabled =
+                false;
+
+        }
+
+    }
+);
+
+function getCurrentUserName() {
+
+    if (
+        currentConversation.buyerId ===
+        currentUser.uid
+    ) {
+
+        return currentConversation.buyerName ||
+            currentUser.email ||
+            "Buyer";
+
+    }
+
+    if (
+        currentConversation.sellerId ===
+        currentUser.uid
+    ) {
+
+        return currentConversation.sellerName ||
+            currentUser.email ||
+            "Seller";
+
+    }
+
+    return currentUser.email ||
+        "User";
+
+}
+
+function setFormEnabled(enabled) {
+
+    messageInput.disabled =
+        !enabled;
+
+    const submitButton =
+        messageForm.querySelector(
+            "button[type='submit']"
+        );
+
+    submitButton.disabled =
+        !enabled;
+
+}
+
+function showError(message) {
+
+    messageError.textContent =
+        message;
+
+    messageError.classList.remove(
+        "d-none"
     );
 
 }
 
+function hideError() {
 
-// =====================================================
-// ESCAPE HTML
-// =====================================================
+    messageError.textContent =
+        "";
 
-function escapeHTML(
-    value
-) {
+    messageError.classList.add(
+        "d-none"
+    );
+
+}
+
+function formatMessageTime(timestamp) {
+
+    if (!timestamp) {
+
+        return "Sending...";
+
+    }
+
+    let date = null;
+
+    if (typeof timestamp.toDate === "function") {
+
+        date =
+            timestamp.toDate();
+
+    }
+
+    else if (timestamp instanceof Date) {
+
+        date =
+            timestamp;
+
+    }
+
+    if (!date) {
+
+        return "";
+
+    }
+
+    return new Intl.DateTimeFormat(
+        "en-US",
+        {
+            month:
+                "short",
+
+            day:
+                "numeric",
+
+            hour:
+                "numeric",
+
+            minute:
+                "2-digit"
+        }
+    ).format(date);
+
+}
+
+function escapeHTML(value) {
 
     return String(value)
-
         .replace(
             /&/g,
             "&amp;"
         )
-
         .replace(
             /</g,
             "&lt;"
         )
-
         .replace(
             />/g,
             "&gt;"
         )
-
         .replace(
             /"/g,
             "&quot;"
         )
-
         .replace(
             /'/g,
             "&#039;"
