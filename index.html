@@ -45,7 +45,24 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
         rel="stylesheet"
     >
+<style>
+    /* Search bar closed on the right when Clear button is hidden */
+    #locationSearch {
+        border-right: 1px solid #212529 !important;
+        border-radius: 0 1rem 1rem 0 !important;
+    }
 
+    /* When Clear button appears, remove the input's right edge */
+    #locationSearch:has(+ #clearSearch:not(.d-none)) {
+        border-right: 0 !important;
+        border-radius: 0 !important;
+    }
+
+    /* Keep the clear button nicely rounded */
+    #clearSearch {
+        border-radius: 0 1rem 1rem 0 !important;
+    }
+</style>
 </head>
 
 
@@ -277,12 +294,12 @@
                 <!-- SEARCH INPUT -->
 
                 <input
-                    type="text"
-                    id="locationSearch"
-                    class="form-control bg-light border border-dark border-start-0 border-end-0 py-3 fs-4 shadow-none"
-                    placeholder="Search Region/School"
-                    autocomplete="off"
-                >
+    type="text"
+    id="locationSearch"
+    class="form-control bg-light border border-dark border-start-0 py-3 fs-4 shadow-none"
+    placeholder="Search Region/School"
+    autocomplete="off"
+>
 
 
                 <!-- CLEAR SEARCH -->
