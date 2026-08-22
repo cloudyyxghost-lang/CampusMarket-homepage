@@ -82,6 +82,41 @@ const createListingButton =
     );
 
 
+const paymentMethods =
+    document.querySelectorAll(
+        ".payment-method"
+    );
+
+
+const paymentDetails =
+    document.querySelectorAll(
+        ".payment-detail"
+    );
+
+
+const paymentLabels = {
+
+    venmo:
+        "Venmo",
+
+    cashapp:
+        "Cash App",
+
+    zelle:
+        "Zelle",
+
+    paypal:
+        "PayPal",
+
+    square:
+        "Square",
+
+    cash:
+        "Cash at pickup"
+
+};
+
+
 // =====================================================
 // CURRENT USER
 // =====================================================
@@ -340,6 +375,188 @@ imagePreview.addEventListener(
 
 
 // =====================================================
+// PAYMENT OPTIONS
+// =====================================================
+
+paymentMethods.forEach(
+    (method) => {
+
+        method.addEventListener(
+            "change",
+            () => {
+
+                updatePaymentControls();
+
+            }
+        );
+
+    }
+);
+
+
+function updatePaymentControls() {
+
+    const selected =
+        getSelectedPaymentMethods();
+
+    paymentMethods.forEach(
+        (method) => {
+
+            if (
+                !method.checked &&
+                selected.length >= 3
+            ) {
+
+                method.disabled =
+                    true;
+
+            }
+
+            else {
+
+                method.disabled =
+                    false;
+
+            }
+
+            const detailInput =
+                getPaymentDetailInput(
+                    method.value
+                );
+
+            if (!detailInput) {
+
+                return;
+
+            }
+
+            detailInput.disabled =
+                !method.checked;
+
+            if (!method.checked) {
+
+                detailInput.value =
+                    "";
+
+            }
+
+        }
+    );
+
+}
+
+
+function getSelectedPaymentMethods() {
+
+    return Array
+        .from(paymentMethods)
+        .filter(
+            (method) => method.checked
+        );
+
+}
+
+
+function getPaymentDetailInput(
+    type
+) {
+
+    return Array
+        .from(paymentDetails)
+        .find(
+            (input) =>
+                input.dataset.paymentType ===
+                type
+        );
+
+}
+
+
+function getPaymentOptions() {
+
+    const selected =
+        getSelectedPaymentMethods();
+
+    if (
+        selected.length === 0
+    ) {
+
+        showError(
+            "Please choose at least one accepted payment method."
+        );
+
+        return null;
+
+    }
+
+    if (
+        selected.length > 3
+    ) {
+
+        showError(
+            "Please choose no more than 3 payment methods."
+        );
+
+        return null;
+
+    }
+
+    const options = [];
+
+    for (
+        const method
+        of selected
+    ) {
+
+        const type =
+            method.value;
+
+        const detailInput =
+            getPaymentDetailInput(
+                type
+            );
+
+        const value =
+            detailInput
+                ? detailInput.value.trim()
+                : "";
+
+        if (
+            type !== "cash" &&
+            !value
+        ) {
+
+            showError(
+                "Please enter your " +
+                paymentLabels[type] +
+                " payment detail."
+            );
+
+            return null;
+
+        }
+
+        options.push({
+
+            type:
+                type,
+
+            label:
+                paymentLabels[type],
+
+            value:
+                value
+
+        });
+
+    }
+
+    return options;
+
+}
+
+
+// =====================================================
 // CREATE LISTING
 // =====================================================
 
@@ -455,6 +672,17 @@ listingForm.addEventListener(
 
         const imageURL =
             itemImageURL.value.trim();
+
+
+        const paymentOptions =
+            getPaymentOptions();
+
+
+        if (!paymentOptions) {
+
+            return;
+
+        }
 
 
         // =============================================
@@ -681,6 +909,14 @@ listingForm.addEventListener(
 
                 images:
                     images,
+
+
+                // -------------------------------------
+                // PAYMENT OPTIONS
+                // -------------------------------------
+
+                paymentOptions:
+                    paymentOptions,
 
 
                 // -------------------------------------

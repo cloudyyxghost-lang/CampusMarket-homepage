@@ -76,6 +76,13 @@ const sellerSchool =
     document.getElementById("sellerSchool");
 
 
+const paymentOptionsSection =
+    document.getElementById("paymentOptionsSection");
+
+const paymentOptionsDisplay =
+    document.getElementById("paymentOptionsDisplay");
+
+
 const messageSellerButton =
     document.getElementById("messageSellerButton");
 
@@ -389,6 +396,15 @@ function displayItem(item) {
 
 
     // ---------------------------------------------
+    // Payment options
+    // ---------------------------------------------
+
+    displayPaymentOptions(
+        item.paymentOptions || []
+    );
+
+
+    // ---------------------------------------------
     // Images
     // ---------------------------------------------
 
@@ -408,6 +424,226 @@ function displayItem(item) {
     itemContent.classList.remove(
         "d-none"
     );
+
+}
+
+
+// =========================================================
+// DISPLAY PAYMENT OPTIONS
+// =========================================================
+
+function displayPaymentOptions(
+    paymentOptions
+) {
+
+    paymentOptionsDisplay.innerHTML =
+        "";
+
+    if (
+        !Array.isArray(paymentOptions) ||
+        paymentOptions.length === 0
+    ) {
+
+        paymentOptionsSection.classList.add(
+            "d-none"
+        );
+
+        return;
+
+    }
+
+    paymentOptionsSection.classList.remove(
+        "d-none"
+    );
+
+    paymentOptions
+        .slice(0, 3)
+        .forEach(
+            (option) => {
+
+                const row =
+                    document.createElement("div");
+
+                row.className =
+                    "border rounded-3 p-3 d-flex align-items-center justify-content-between gap-3 flex-wrap";
+
+                const label =
+                    option.label ||
+                    getPaymentLabel(
+                        option.type
+                    );
+
+                const detail =
+                    option.value ||
+                    "";
+
+                const paymentURL =
+                    getPaymentURL(
+                        option.type,
+                        detail
+                    );
+
+                row.innerHTML = `
+
+                    <div>
+
+                        <div class="fw-semibold">
+
+                            <i class="${getPaymentIcon(
+                                option.type
+                            )} me-2"></i>
+
+                            ${escapeHTML(label)}
+
+                        </div>
+
+                        <div class="small text-secondary">
+
+                            ${escapeHTML(
+                                detail ||
+                                "Pay at pickup"
+                            )}
+
+                        </div>
+
+                    </div>
+
+                    ${
+                        paymentURL
+                            ? `
+                                <a
+                                    href="${escapeHTML(paymentURL)}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="btn btn-sm btn-outline-dark rounded-3"
+                                >
+                                    Pay
+                                </a>
+                            `
+                            : ""
+                    }
+
+                `;
+
+                paymentOptionsDisplay.appendChild(
+                    row
+                );
+
+            }
+        );
+
+}
+
+
+function getPaymentLabel(
+    type
+) {
+
+    const labels = {
+
+        venmo:
+            "Venmo",
+
+        cashapp:
+            "Cash App",
+
+        zelle:
+            "Zelle",
+
+        paypal:
+            "PayPal",
+
+        square:
+            "Square",
+
+        cash:
+            "Cash at pickup"
+
+    };
+
+    return labels[type] ||
+        "Payment";
+
+}
+
+
+function getPaymentIcon(
+    type
+) {
+
+    const icons = {
+
+        venmo:
+            "bi bi-phone",
+
+        cashapp:
+            "bi bi-cash-coin",
+
+        zelle:
+            "bi bi-bank",
+
+        paypal:
+            "bi bi-wallet2",
+
+        square:
+            "bi bi-credit-card",
+
+        cash:
+            "bi bi-cash"
+
+    };
+
+    return icons[type] ||
+        "bi bi-credit-card";
+
+}
+
+
+function getPaymentURL(
+    type,
+    value
+) {
+
+    if (!value) {
+
+        return "";
+
+    }
+
+    if (
+        value.startsWith("http://") ||
+        value.startsWith("https://")
+    ) {
+
+        return value;
+
+    }
+
+    if (
+        type === "venmo"
+    ) {
+
+        return "https://venmo.com/u/" +
+            encodeURIComponent(
+                value.replace(/^@/, "")
+            );
+
+    }
+
+    if (
+        type === "cashapp"
+    ) {
+
+        const cashtag =
+            value.replace(/^\$/, "");
+
+        return "https://cash.app/" +
+            "$" +
+            encodeURIComponent(cashtag);
+
+    }
+
+    return "";
 
 }
 
@@ -852,5 +1088,32 @@ function getFirebaseErrorMessage(error) {
             return "Something went wrong. Please try again.";
 
     }
+
+}
+
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }

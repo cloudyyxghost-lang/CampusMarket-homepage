@@ -102,6 +102,41 @@ const saveButton =
     );
 
 
+const paymentMethods =
+    document.querySelectorAll(
+        ".payment-method"
+    );
+
+
+const paymentDetails =
+    document.querySelectorAll(
+        ".payment-detail"
+    );
+
+
+const paymentLabels = {
+
+    venmo:
+        "Venmo",
+
+    cashapp:
+        "Cash App",
+
+    zelle:
+        "Zelle",
+
+    paypal:
+        "PayPal",
+
+    square:
+        "Square",
+
+    cash:
+        "Cash at pickup"
+
+};
+
+
 // =====================================================
 // AUTH
 // =====================================================
@@ -289,6 +324,11 @@ async function loadListing(
             existingImage
         );
 
+
+        setPaymentOptions(
+            listing.paymentOptions || []
+        );
+
     }
 
     catch (error) {
@@ -321,6 +361,215 @@ imageUrl.addEventListener(
 
     }
 );
+
+
+// =====================================================
+// PAYMENT OPTIONS
+// =====================================================
+
+paymentMethods.forEach(
+    (method) => {
+
+        method.addEventListener(
+            "change",
+            () => {
+
+                updatePaymentControls();
+
+            }
+        );
+
+    }
+);
+
+
+function setPaymentOptions(
+    options
+) {
+
+    paymentMethods.forEach(
+        (method) => {
+
+            const option =
+                options.find(
+                    (item) =>
+                        item.type ===
+                        method.value
+                );
+
+            method.checked =
+                Boolean(option);
+
+            const detailInput =
+                getPaymentDetailInput(
+                    method.value
+                );
+
+            if (
+                detailInput &&
+                option
+            ) {
+
+                detailInput.value =
+                    option.value || "";
+
+            }
+
+        }
+    );
+
+    updatePaymentControls();
+
+}
+
+
+function updatePaymentControls() {
+
+    const selected =
+        getSelectedPaymentMethods();
+
+    paymentMethods.forEach(
+        (method) => {
+
+            method.disabled =
+                !method.checked &&
+                selected.length >= 3;
+
+            const detailInput =
+                getPaymentDetailInput(
+                    method.value
+                );
+
+            if (!detailInput) {
+
+                return;
+
+            }
+
+            detailInput.disabled =
+                !method.checked;
+
+            if (!method.checked) {
+
+                detailInput.value =
+                    "";
+
+            }
+
+        }
+    );
+
+}
+
+
+function getSelectedPaymentMethods() {
+
+    return Array
+        .from(paymentMethods)
+        .filter(
+            (method) => method.checked
+        );
+
+}
+
+
+function getPaymentDetailInput(
+    type
+) {
+
+    return Array
+        .from(paymentDetails)
+        .find(
+            (input) =>
+                input.dataset.paymentType ===
+                type
+        );
+
+}
+
+
+function getPaymentOptions() {
+
+    const selected =
+        getSelectedPaymentMethods();
+
+    if (
+        selected.length === 0
+    ) {
+
+        showError(
+            "Please choose at least one accepted payment method."
+        );
+
+        return null;
+
+    }
+
+    if (
+        selected.length > 3
+    ) {
+
+        showError(
+            "Please choose no more than 3 payment methods."
+        );
+
+        return null;
+
+    }
+
+    const options = [];
+
+    for (
+        const method
+        of selected
+    ) {
+
+        const type =
+            method.value;
+
+        const detailInput =
+            getPaymentDetailInput(
+                type
+            );
+
+        const value =
+            detailInput
+                ? detailInput.value.trim()
+                : "";
+
+        if (
+            type !== "cash" &&
+            !value
+        ) {
+
+            showError(
+                "Please enter your " +
+                paymentLabels[type] +
+                " payment detail."
+            );
+
+            return null;
+
+        }
+
+        options.push({
+
+            type:
+                type,
+
+            label:
+                paymentLabels[type],
+
+            value:
+                value
+
+        });
+
+    }
+
+    return options;
+
+}
 
 
 function showImagePreview(
@@ -377,6 +626,14 @@ form.addEventListener(
 
         try {
 
+            errorMessage.classList.add(
+                "d-none"
+            );
+
+            successMessage.classList.add(
+                "d-none"
+            );
+
             saveButton.disabled =
                 true;
 
@@ -394,6 +651,28 @@ form.addEventListener(
 
             const newImage =
                 imageUrl.value.trim();
+
+
+            const paymentOptions =
+                getPaymentOptions();
+
+
+            if (!paymentOptions) {
+
+                saveButton.disabled =
+                    false;
+
+                saveButton.innerHTML = `
+
+                    <i class="bi bi-check-lg"></i>
+
+                    Save Changes
+
+                `;
+
+                return;
+
+            }
 
 
             const updatedListing = {
@@ -424,7 +703,10 @@ form.addEventListener(
                 images:
                     newImage
                         ? [newImage]
-                        : []
+                        : [],
+
+                paymentOptions:
+                    paymentOptions
 
             };
 

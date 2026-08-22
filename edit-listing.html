@@ -345,6 +345,205 @@
                 </div>
 
 
+                <!-- PAYMENT OPTIONS -->
+
+                <div class="mb-4">
+
+                    <label class="form-label fw-semibold">
+                        Accepted Payments
+                    </label>
+
+                    <p class="text-secondary small mb-3">
+                        Choose up to 3 ways buyers can pay you.
+                    </p>
+
+                    <div
+                        id="paymentOptions"
+                        class="d-flex flex-column gap-3"
+                    >
+
+                        <div class="border rounded-4 p-3">
+
+                            <div class="form-check">
+
+                                <input
+                                    class="form-check-input payment-method"
+                                    type="checkbox"
+                                    value="venmo"
+                                    id="paymentVenmo"
+                                >
+
+                                <label
+                                    class="form-check-label fw-semibold"
+                                    for="paymentVenmo"
+                                >
+                                    Venmo
+                                </label>
+
+                            </div>
+
+                            <input
+                                type="text"
+                                class="form-control mt-2 payment-detail"
+                                data-payment-type="venmo"
+                                placeholder="@username or Venmo link"
+                                disabled
+                            >
+
+                        </div>
+
+
+                        <div class="border rounded-4 p-3">
+
+                            <div class="form-check">
+
+                                <input
+                                    class="form-check-input payment-method"
+                                    type="checkbox"
+                                    value="cashapp"
+                                    id="paymentCashApp"
+                                >
+
+                                <label
+                                    class="form-check-label fw-semibold"
+                                    for="paymentCashApp"
+                                >
+                                    Cash App
+                                </label>
+
+                            </div>
+
+                            <input
+                                type="text"
+                                class="form-control mt-2 payment-detail"
+                                data-payment-type="cashapp"
+                                placeholder="$cashtag or Cash App link"
+                                disabled
+                            >
+
+                        </div>
+
+
+                        <div class="border rounded-4 p-3">
+
+                            <div class="form-check">
+
+                                <input
+                                    class="form-check-input payment-method"
+                                    type="checkbox"
+                                    value="zelle"
+                                    id="paymentZelle"
+                                >
+
+                                <label
+                                    class="form-check-label fw-semibold"
+                                    for="paymentZelle"
+                                >
+                                    Zelle
+                                </label>
+
+                            </div>
+
+                            <input
+                                type="text"
+                                class="form-control mt-2 payment-detail"
+                                data-payment-type="zelle"
+                                placeholder="Email or phone number"
+                                disabled
+                            >
+
+                        </div>
+
+
+                        <div class="border rounded-4 p-3">
+
+                            <div class="form-check">
+
+                                <input
+                                    class="form-check-input payment-method"
+                                    type="checkbox"
+                                    value="paypal"
+                                    id="paymentPayPal"
+                                >
+
+                                <label
+                                    class="form-check-label fw-semibold"
+                                    for="paymentPayPal"
+                                >
+                                    PayPal
+                                </label>
+
+                            </div>
+
+                            <input
+                                type="text"
+                                class="form-control mt-2 payment-detail"
+                                data-payment-type="paypal"
+                                placeholder="PayPal.me link or email"
+                                disabled
+                            >
+
+                        </div>
+
+
+                        <div class="border rounded-4 p-3">
+
+                            <div class="form-check">
+
+                                <input
+                                    class="form-check-input payment-method"
+                                    type="checkbox"
+                                    value="square"
+                                    id="paymentSquare"
+                                >
+
+                                <label
+                                    class="form-check-label fw-semibold"
+                                    for="paymentSquare"
+                                >
+                                    Square
+                                </label>
+
+                            </div>
+
+                            <input
+                                type="url"
+                                class="form-control mt-2 payment-detail"
+                                data-payment-type="square"
+                                placeholder="Square payment link"
+                                disabled
+                            >
+
+                        </div>
+
+
+                        <div class="border rounded-4 p-3">
+
+                            <div class="form-check">
+
+                                <input
+                                    class="form-check-input payment-method"
+                                    type="checkbox"
+                                    value="cash"
+                                    id="paymentCash"
+                                >
+
+                                <label
+                                    class="form-check-label fw-semibold"
+                                    for="paymentCash"
+                                >
+                                    Cash at pickup
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
 
                 <!-- STATUS -->
 
