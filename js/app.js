@@ -958,8 +958,8 @@ function createListingCard(
                         style="
                             width:36px;
                             height:36px;
-                            background:#eeeaff;
-                            color:#635bff;
+                            background:var(--cm-primary-soft);
+                            color:var(--cm-primary);
                         "
                     >
 

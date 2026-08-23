@@ -502,8 +502,8 @@ function displayListings(
                     style="
                         width: 75px;
                         height: 75px;
-                        background-color: #f0efff;
-                        color: #635bff;
+                        background-color: var(--cm-primary-soft);
+                        color: var(--cm-primary);
                     "
                 >
 
@@ -533,7 +533,7 @@ function displayListings(
                     href="create-listing.html"
                     class="btn text-white rounded-3 px-4"
                     style="
-                        background-color: #635bff;
+                        background-color: var(--cm-primary);
                     "
                 >
 

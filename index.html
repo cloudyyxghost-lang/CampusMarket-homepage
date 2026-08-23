@@ -48,7 +48,7 @@
 <style>
     /* Search bar closed on the right when Clear button is hidden */
     #locationSearch {
-        border-right: 1px solid #212529 !important;
+        border-right: 1px solid var(--cm-border) !important;
         border-radius: 0 1rem 1rem 0 !important;
     }
 
@@ -63,6 +63,8 @@
         border-radius: 0 1rem 1rem 0 !important;
     }
 </style>
+    <link rel="stylesheet" href="css/themes.css">
+    <script src="js/theme.js"></script>
 </head>
 
 
@@ -74,8 +76,7 @@
     ====================================================== -->
 
     <div
-        class="container-fluid border border-dark rounded-5 min-vh-100 my-3"
-        style="width: calc(100% - 48px);"
+        class="container-fluid min-vh-100"
     >
 
 
@@ -153,6 +154,7 @@
                 >
 
                     <div
+                        id="themePickerHost"
                         class="d-flex align-items-center justify-content-end gap-2 mt-3 mt-lg-0"
                     >
 
@@ -227,7 +229,13 @@
                                 |
                             </span>
 
-
+<a
+    href="donate.html"
+    class="btn btn-outline-success"
+>
+    <i class="bi bi-heart-fill me-1"></i>
+    Donate
+</a>
                             <!-- SELL ITEMS -->
 
                             <a

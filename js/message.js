@@ -394,7 +394,7 @@ function createMessageBubble(message) {
             } rounded-4 px-3 py-2"
             style="
                 max-width:min(75%, 560px);
-                background-color:${isMine ? "#635bff" : ""};
+                background-color:${isMine ? "var(--cm-primary)" : ""};
                 overflow-wrap:anywhere;
             "
         >
