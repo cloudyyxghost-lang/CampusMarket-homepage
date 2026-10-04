@@ -168,6 +168,19 @@ html[data-theme="dark"] .navbar-toggler-icon {
     background-color: var(--cm-primary) !important;
 }
 
+/* Keep the white icon/text treatment inside the colored brand frames.
+   The theme colors change the frame, but should never change its content. */
+.text-white,
+.text-white i,
+.logo-icon,
+.logo-icon i,
+[style*="background-color: #635bff"].text-white,
+[style*="background-color:#635bff"].text-white,
+[style*="background-color: #635bff"] > i,
+[style*="background-color:#635bff"] > i {
+    color: #fff !important;
+}
+
 [style*="border-color: #635bff"],
 [style*="border-color:#635bff"] {
     border-color: var(--cm-primary) !important;
